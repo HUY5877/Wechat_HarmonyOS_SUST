@@ -5,6 +5,7 @@ export default struct ListMenuItem {
   private title: string = "朋友圈"
   private news: string = ""
   private newsIconSrc?: Resource
+  private clickHandler?: () => void
 
   build() {
     Row() {
@@ -34,5 +35,10 @@ export default struct ListMenuItem {
     .height(60)
     .backgroundColor("#fff")
     .padding({ left: 15, right: 15 })
+    .onClick(() => {
+      if (this.clickHandler) {
+        this.clickHandler()
+      }
+    })
   }
 }

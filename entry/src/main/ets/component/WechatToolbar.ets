@@ -5,7 +5,7 @@ import WindowManager from '../utils/WindowManager'
 @Preview
 @Component
 export default struct WechatToolbar {
-  private title: string = "发现"
+  title: string = "发现"
 
   build() {
     Column() {

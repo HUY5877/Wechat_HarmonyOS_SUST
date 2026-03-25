@@ -1,5 +1,8 @@
+
 import ListMenuItem from '../../component/ListMenuItem'
 import WechatToolbar from '../../component/WechatToolbar'
+import router from '@ohos.router'
+import { BusinessError } from '@kit.BasicServicesKit'
 
 @Preview
 @Component
@@ -36,12 +39,16 @@ export default struct Discovery {
         .color("#f3f3f3")
         .strokeWidth(10)
         .lineCap(LineCapStyle.Round)
-
       ListMenuItem({
-        title: "游戏",
+        title: "2048",
         news: "朋友瞬杀时刻",
         newsIconSrc: $r('app.media.ic_user_head1'),
-        iconSrc: $r('app.media.ic_game')
+        iconSrc: $r('app.media.ic_game'),
+        clickHandler: () => {
+          router.pushUrl({
+            url: 'pages/game2048/Game2048'
+          })
+        }
       })
 
       Divider()

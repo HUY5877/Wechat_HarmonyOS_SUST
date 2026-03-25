@@ -4,6 +4,7 @@
     "pages/search/SearchPage",
     "pages/chat/ChatPage",
     "pages/qrcode/MyQrCodePage",
-    "pages/HardwareIndexPage"
+    "pages/HardwareIndexPage",
+    "pages/game2048/Game2048"
   ]
 }
