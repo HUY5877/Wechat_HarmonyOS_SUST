@@ -28,7 +28,7 @@ interface RequestData {
 }
 
 export default class ContactApi {
-  private static baseUrl: string = 'http://47.110.126.251:8080/api';
+  private static baseUrl: string = 'http://146.56.215.115:10001/api/v1/service';
 
   private static async request(operation: string, tableName: string, data: RequestData): Promise<ApiResponse | ContactApiResult | AddFriendResult> {
     const httpRequest = http.createHttp();
