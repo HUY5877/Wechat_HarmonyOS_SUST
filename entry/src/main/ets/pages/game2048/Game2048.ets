@@ -326,7 +326,7 @@ export default struct Game2048 {
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)
-          .backgroundColor("#8f7a66")
+          .backgroundColor("#8f7a66ff")
           .borderRadius(3)
           .width(60)
           .height(60)
