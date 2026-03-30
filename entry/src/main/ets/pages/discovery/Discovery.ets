@@ -17,7 +17,6 @@ export default struct Discovery {
         .vertical(false)
         .color("#f3f3f3")
         .strokeWidth(10)
-        .lineCap(LineCapStyle.Round)
 
       ListMenuItem({ title: "扫一扫",
         iconSrc: $r('app.media.ic_scan') })
@@ -28,7 +27,6 @@ export default struct Discovery {
         .vertical(false)
         .color("#f3f3f3")
         .strokeWidth(1)
-        .lineCap(LineCapStyle.Round)
 
       ListMenuItem({ title: "听一听",
         iconSrc: $r('app.media.ic_listen')
@@ -38,15 +36,14 @@ export default struct Discovery {
         .vertical(false)
         .color("#f3f3f3")
         .strokeWidth(10)
-        .lineCap(LineCapStyle.Round)
       ListMenuItem({
-        title: "2048",
+        title: "游戏",
         news: "朋友瞬杀时刻",
         newsIconSrc: $r('app.media.ic_user_head1'),
         iconSrc: $r('app.media.ic_game'),
         clickHandler: () => {
           router.pushUrl({
-            url: 'pages/game2048/Game2048'
+            url: 'pages/discovery/GamePage'
           })
         }
       })
@@ -55,7 +52,6 @@ export default struct Discovery {
         .vertical(false)
         .color("#f3f3f3")
         .strokeWidth(10)
-        .lineCap(LineCapStyle.Round)
 
       ListMenuItem({ title: "小程序",
         iconSrc: $r('app.media.ic_miniprogram')

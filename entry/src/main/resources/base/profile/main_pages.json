@@ -5,6 +5,9 @@
     "pages/chat/ChatPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
-    "pages/game2048/Game2048"
+    "pages/game2048/Game2048",
+    "pages/mine/SettingPage",
+    "pages/mine/AccountSecurityPage",
+    "pages/discovery/GamePage"
   ]
 }
