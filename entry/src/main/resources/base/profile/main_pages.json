@@ -1,10 +1,13 @@
 {
   "src": [
+    "pages/log_in/Log_in",
+    "pages/log_in/Register",
     "pages/Index",
     "pages/search/SearchPage",
     "pages/chat/ChatPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
+    "pages/favorite/Favorite",
     "pages/moments/MomentsPage",
     "pages/moments/PublishMomentPage"
   ]
