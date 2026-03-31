@@ -1,5 +1,4 @@
 import router from '@ohos.router';
-import prompt from '@ohos.promptAction';
 import WindowManager from '../../utils/WindowManager';
 import ContactApi from '../../utils/ContactApi';
 
@@ -126,7 +125,7 @@ export default struct AddFriendPage {
 
   async searchByAccount() {
     if (this.searchText.trim() === '') {
-      prompt.showToast({ message: '请输入微信号或手机号' })
+      console.log('请输入微信号或手机号')
       return
     }
 
@@ -144,10 +143,10 @@ export default struct AddFriendPage {
           profile_picture_id: ''
         }]
       } else {
-        prompt.showToast({ message: result.text || '未找到该用户' })
+        console.log(result.text || '未找到该用户')
       }
     } catch (error) {
-      prompt.showToast({ message: '搜索失败' })
+      console.log('搜索失败')
     }
 
     this.isSearching = false
@@ -157,14 +156,14 @@ export default struct AddFriendPage {
     try {
       const result = await ContactApi.addFriend(this.currentUserId, account)
       if (result.result === 'success') {
-        prompt.showToast({ message: '已发送好友请求' })
+        console.log('已发送好友请求')
         this.searchText = ''
         this.searchResults = []
       } else {
-        prompt.showToast({ message: result.text || '添加失败' })
+        console.log(result.text || '添加失败')
       }
     } catch (error) {
-      prompt.showToast({ message: '添加失败' })
+      console.log('添加失败')
     }
   }
 }
