@@ -4,6 +4,7 @@ export interface FavoriteRecord {
   favorites_id: string
   content: string
   created_at: string
+  message_id: string
   favorites_user_id?: string // 搜索接口可能不返回此字段
 }
 
@@ -86,6 +87,7 @@ async function requestFavoriteList(payload: BasePayload, userId: string): Promis
               favorites_id: item['favorites_id'] ? String(item['favorites_id']) : '',
               content: item['content'] ? String(item['content']) : (item['favorites_content'] ? String(item['favorites_content']) : ''),
               created_at: item['created_at'] ? String(item['created_at']) : '',
+              message_id: item['message_id'] ? String(item['message_id']) : '',
               favorites_user_id: item['favorites_user_id'] ? String(item['favorites_user_id']) : undefined
             }
             return record

@@ -83,7 +83,14 @@ export default struct Favorite {
         Image($r('app.media.ic_back_black'))
           .width(24)
           .height(24)
-          .fillColor('#EDEDED')
+          .colorFilter(
+            [
+              0, 0, 0, 0, 237/255, // R
+              0, 0, 0, 0, 237/255, // G
+              0, 0, 0, 0, 237/255, // B
+              0, 0, 0, 1, 0        // A
+            ]
+          )
           .onClick(() => {
             router.back()
           })
