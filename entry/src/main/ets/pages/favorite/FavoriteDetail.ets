@@ -24,7 +24,7 @@ export default struct FavoriteDetail {
     if (!this.userId || !this.record) return
     this.isDeleting = true
     try {
-      const res = await deleteFavorite(this.userId, this.record.favorites_id)
+      const res = await deleteFavorite(this.userId, this.record.message_id)
       if (res.success) {
         Toast.show('删除成功')
         router.back()
@@ -45,7 +45,14 @@ export default struct FavoriteDetail {
         Image($r('app.media.ic_back_black'))
           .width(24)
           .height(24)
-          .fillColor('#EDEDED')
+          .colorFilter(
+            [
+              0, 0, 0, 0, 7/255,   // R = 7
+              0, 0, 0, 0, 193/255, // G = 193
+              0, 0, 0, 0, 96/255,  // B = 96
+              0, 0, 0, 1, 0        // A保持不变
+            ]
+          )
           .onClick(() => {
             router.back()
           })
