@@ -9,6 +9,7 @@ export default struct Toolbar {
   private backSrc: string | PixelMap | Resource = $r("app.media.ic_back_black")
   private subTitle: string = "更多"
   private subIconSrc: string | PixelMap | Resource = $r("app.media.ic_toolbar_more")
+  private onSubClick: () => void = unDevTip
 
   build() {
     Column() {
@@ -38,7 +39,7 @@ export default struct Toolbar {
             .width(25)
             .height(25)
             .margin({ right: 15 })
-            .onClick(unDevTip)
+            .onClick(this.onSubClick)
         }
 
       }

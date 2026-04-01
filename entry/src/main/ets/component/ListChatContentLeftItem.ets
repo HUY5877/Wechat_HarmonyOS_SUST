@@ -1,10 +1,12 @@
 import { ChatContentItemData } from '../pages/chat/ChatContentItemData'
 import AudioRendererManager from '../utils/AudioRendererManager'
+import prompt from '@ohos.promptAction'
 
 @Preview
 @Component
 export default struct ListChatContentLeftItem {
   private data?: ChatContentItemData
+  onLongPress: (index?: number) => void = () => {}
 
   build() {
     Row() {
@@ -37,6 +39,12 @@ export default struct ListChatContentLeftItem {
               top: 10,
               bottom: 10
             })
+            .gesture(
+              LongPressGesture()
+                .onAction(() => {
+                  this.onLongPress(this.data?.messageIndex)
+                })
+            )
 
         } else if (this.data?.msgType === 2) {
           Row() {
@@ -60,6 +68,12 @@ export default struct ListChatContentLeftItem {
           .borderRadius(4)
           .backgroundColor("#a9ea7a")
           .onClick(this.playVoice)
+          .gesture(
+            LongPressGesture()
+              .onAction(() => {
+                this.onLongPress(this.data?.messageIndex)
+              })
+          )
 
         } else {
           Image(this.data?.img)
@@ -67,6 +81,12 @@ export default struct ListChatContentLeftItem {
             .borderRadius(4)
             .objectFit(ImageFit.Auto)
             .backgroundColor(Color.White)
+            .gesture(
+              LongPressGesture()
+                .onAction(() => {
+                  this.onLongPress(this.data?.messageIndex)
+                })
+            )
         }
       }
       .margin({ right: 80 })
@@ -75,7 +95,7 @@ export default struct ListChatContentLeftItem {
     }.alignItems(VerticalAlign.Top)
   }
 
-  playVoice = async () => {
+  playVoice = async (): Promise<void> => {
     if (this.data?.voicePath) {
       AudioRendererManager.doPlay(this.data?.voicePath)
     }
@@ -85,4 +105,3 @@ export default struct ListChatContentLeftItem {
     AudioRendererManager.release()
   }
 }
-

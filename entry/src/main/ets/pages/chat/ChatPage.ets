@@ -13,6 +13,7 @@ import { AudioCaptureManager, RecordFile } from '../../utils/AudioCapturerManage
 import { componentUtils } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { PermissionUtils } from '../../utils/PermissionUtils';
+import { getMessagesList, deleteMessage, MessageItem } from '../../utils/LoginApi';
 
 enum WXInputType {
   /**
@@ -98,12 +99,18 @@ interface ScreenOffset {
 @Component
 export default struct ChatPage {
   private name?: string = "微信"
+  private friendId?: string = ""
+  private targetMessageId?: string = ""
   private controller: TextAreaController = new TextAreaController()
   private scroller: Scroller = new Scroller()
   @State private chatText: string = ''
+  @StorageProp('userId') userId: string = ''
   private keyboardHeight: number = 0
   @State private funcBarHeight: number = 0;
   @State private showFuncBar: boolean = false;
+  @State private showMessageMenu: boolean = false
+  @State private selectedMessageIndex: number = -1
+  @State private showPasteButton: boolean = false
   @State private dataList: ChatContentItemData[] = [
     {
       name: "鲁班",
@@ -257,7 +264,11 @@ export default struct ChatPage {
   }
 
   async aboutToAppear() {
-    this.name = (router.getParams() as ChatPageParam).name
+    const params = router.getParams() as ChatPageParam
+    this.name = params.name
+    this.friendId = params.friend_id
+    this.targetMessageId = params.messageId
+    await this.loadMessages()
     await window.getLastWindow(getContext(this)).then(currentWindow => {
       currentWindow.on('keyboardHeightChange', (height) => {
         this.keyboardHeight = height;
@@ -265,8 +276,117 @@ export default struct ChatPage {
     })
   }
 
+  onPageShow(): void {
+    const shouldRefresh = AppStorage.get<boolean>('needRefreshChat')
+    if (shouldRefresh) {
+      AppStorage.set('needRefreshChat', false)
+      this.loadMessages()
+    }
+  }
+
+  private async loadMessages() {
+    if (!this.userId || !this.friendId) {
+      console.info('[ChatPage] userId 或 friendId 为空，跳过加载消息')
+      return
+    }
+
+    try {
+      console.info(`[ChatPage] 开始加载消息，userId: ${this.userId}, friendId: ${this.friendId}`)
+      const result = await getMessagesList(this.userId, this.friendId)
+
+      if (result.success && result.messages && result.messages.length > 0) {
+        const chatItems: ChatContentItemData[] = []
+        for (let i = 0; i < result.messages.length; i++) {
+          const msg = result.messages[i]
+          const isSelf = msg.message_user_id === this.userId
+          chatItems.push({
+            name: isSelf ? this.name : '对方',
+            msg: msg.content,
+            msgType: 0,
+            self: isSelf,
+            messageId: msg.message_id
+          })
+        }
+        this.dataList = chatItems
+        console.info(`[ChatPage] 成功加载 ${chatItems.length} 条消息`)
+
+        if (this.targetMessageId) {
+          const targetIndex = chatItems.findIndex((item: ChatContentItemData) => item.messageId === this.targetMessageId)
+          if (targetIndex >= 0) {
+            console.info(`[ChatPage] 找到目标消息，index: ${targetIndex}`)
+            this.scroller.scrollToIndex(targetIndex)
+          } else {
+            console.info(`[ChatPage] 未找到目标消息 messageId: ${this.targetMessageId}`)
+          }
+        }
+      } else {
+        console.info('[ChatPage] 暂无历史消息')
+        this.dataList = []
+      }
+    } catch (err) {
+      console.error(`[ChatPage] 加载消息异常: ${JSON.stringify(err)}`)
+    }
+  }
+
   onBackPress() {
     return this.keyboardHeight > 0
+  }
+
+  onMessageLongPress = (index: number): void => {
+    this.selectedMessageIndex = index
+    this.showMessageMenu = true
+  }
+
+  onCopyMessage = (): void => {
+    if (this.selectedMessageIndex >= 0 && this.selectedMessageIndex < this.dataList.length) {
+      const msg = this.dataList[this.selectedMessageIndex].msg
+      if (msg) {
+        AppStorage.setOrCreate('copiedMessage', msg)
+        Toast.show('已复制到剪贴板')
+      }
+    }
+    this.showMessageMenu = false
+  }
+
+  onDeleteMessage = async (): Promise<void> => {
+    if (this.selectedMessageIndex >= 0 && this.selectedMessageIndex < this.dataList.length) {
+      const msgItem = this.dataList[this.selectedMessageIndex]
+      if (!msgItem.messageId) {
+        Toast.show('该消息无法删除')
+        this.showMessageMenu = false
+        return
+      }
+      try {
+        const result = await deleteMessage(this.userId, msgItem.messageId)
+        if (result.success) {
+          this.dataList.splice(this.selectedMessageIndex, 1)
+          Toast.show('删除成功')
+        } else {
+          Toast.show(result.message || '删除失败')
+        }
+      } catch (err) {
+        Toast.show('删除失败')
+      }
+    }
+    this.showMessageMenu = false
+  }
+
+  onForwardMessage = (): void => {
+    if (this.selectedMessageIndex >= 0 && this.selectedMessageIndex < this.dataList.length) {
+      const msgItem = this.dataList[this.selectedMessageIndex]
+      router.pushUrl({
+        url: 'pages/chat/ForwardPage',
+        params: {
+          content: msgItem.msg
+        }
+      })
+    }
+    this.showMessageMenu = false
+  }
+
+  onCancelMenu = (): void => {
+    this.showMessageMenu = false
+    this.selectedMessageIndex = -1
   }
 
   // 开始录音
@@ -329,14 +449,37 @@ export default struct ChatPage {
 
   build() {
     Column() {
-      Toolbar({ title: this.name })
+      Toolbar({
+        title: this.name,
+        subTitle: '',
+        subIconSrc: $r("app.media.ic_search"),
+        onSubClick: () => {
+          router.pushUrl({
+            url: 'pages/chat/SearchMessagePage',
+            params: {
+              name: this.name,
+              friend_id: this.friendId
+            }
+          })
+        }
+      })
       List({ space: 20, initialIndex: this.dataList.length, scroller: this.scroller }) {
-        ForEach(this.dataList, (item: ChatContentItemData) => {
+        ForEach(this.dataList, (item: ChatContentItemData, index: number) => {
           ListItem() {
             if (item.self) {
-              ListChatContentRightItem({ data: item })
+              ListChatContentRightItem({
+                data: item,
+                onLongPress: (idx) => {
+                  this.onMessageLongPress(idx ?? index)
+                }
+              })
             } else {
-              ListChatContentLeftItem({ data: item })
+              ListChatContentLeftItem({
+                data: item,
+                onLongPress: (idx) => {
+                  this.onMessageLongPress(idx ?? index)
+                }
+              })
             }
           }
         })
@@ -375,7 +518,7 @@ export default struct ChatPage {
             .padding({ left: 8, right: 8 })
             .fontSize(20)
             .fontColor(Color.Black)
-            .borderRadius(8)// 设置stateStyles，解决点击编辑框会变色的问题
+            .borderRadius(8)
             .stateStyles({
               normal: {.backgroundColor(Color.White)
               },
@@ -386,9 +529,22 @@ export default struct ChatPage {
               focused: {.backgroundColor(Color.White)
               }
             })
-          // .onSubmit(() => {
-          //   prompt.showToast({ message: this.chatText })
-          // })
+            .onClick(() => {
+              const copied = AppStorage.get<string>('copiedMessage')
+              if (copied) {
+                this.showPasteButton = true
+              }
+            })
+            .gesture(
+              LongPressGesture()
+                .onAction(() => {
+                  const copied = AppStorage.get<string>('copiedMessage')
+                  if (copied) {
+                    this.chatText = this.chatText + copied
+                    Toast.show('已粘贴')
+                  }
+                })
+            )
         } else {
           Image($r("app.media.ic_use_keyboard"))
             .width(33)
@@ -410,6 +566,24 @@ export default struct ChatPage {
             .bindContentCover($$this.showTalkContainer, this.buildRecordVoiceView,
               { modalTransition: ModalTransition.NONE })
             .onTouch(this.onPressTalk)
+        }
+
+        if (this.showPasteButton) {
+          Button('粘贴')
+            .fontSize(14)
+            .fontColor(Color.White)
+            .backgroundColor('#58BE6A')
+            .borderRadius(4)
+            .height(32)
+            .padding({ left: 12, right: 12 })
+            .onClick(() => {
+              const copied = AppStorage.get<string>('copiedMessage')
+              if (copied) {
+                this.chatText = this.chatText + copied
+                Toast.show('已粘贴')
+              }
+              this.showPasteButton = false
+            })
         }
 
 
@@ -469,6 +643,73 @@ export default struct ChatPage {
     .height("100%")
     .backgroundColor("#f1f1f1")
     .padding({ bottom: WindowManager.navBarHeight })
+    .bindSheet($$this.showMessageMenu, this.buildMessageActionSheet(), {
+      height: 70,
+      dragBar: false,
+      maskColor: '#80000000',
+      onWillDismiss: () => {
+        this.showMessageMenu = false
+      }
+    })
+  }
+
+  @Builder
+  buildMessageActionSheet() {
+    Column() {
+      Row() {
+        Button('删除')
+          .fontSize(14)
+          .fontColor('#666666')
+          .backgroundColor('#ffffff')
+          .borderRadius(8)
+          .height(40)
+          .layoutWeight(1)
+          .onClick(() => {
+            this.onDeleteMessage()
+          })
+
+        Button('复制')
+          .fontSize(14)
+          .fontColor('#666666')
+          .backgroundColor('#ffffff')
+          .borderRadius(8)
+          .height(40)
+          .layoutWeight(1)
+          .onClick(() => {
+            this.onCopyMessage()
+          })
+
+        Button('转发')
+          .fontSize(14)
+          .fontColor('#666666')
+          .backgroundColor('#ffffff')
+          .borderRadius(8)
+          .height(40)
+          .layoutWeight(1)
+          .onClick(() => {
+            this.onForwardMessage()
+          })
+
+        Button('取消')
+          .fontSize(14)
+          .fontColor('#666666')
+          .backgroundColor('#ffffff')
+          .borderRadius(8)
+          .height(40)
+          .layoutWeight(1)
+          .onClick(() => {
+            this.onCancelMenu()
+          })
+      }
+      .width('100%')
+      .padding({ left: 8, right: 8, top: 8, bottom: 8 })
+      .backgroundColor('#ffffff')
+      .borderRadius(8)
+    }
+    .width('100%')
+    .backgroundColor('#80000000')
+    .justifyContent(FlexAlign.End)
+    .padding({ bottom: 8 })
   }
 
   private sendTextMsg() {

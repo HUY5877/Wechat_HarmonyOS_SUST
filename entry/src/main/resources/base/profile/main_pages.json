@@ -5,6 +5,8 @@
     "pages/Index",
     "pages/search/SearchPage",
     "pages/chat/ChatPage",
+    "pages/chat/SearchMessagePage",
+    "pages/chat/ForwardPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
     "pages/favorite/Favorite"
