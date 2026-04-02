@@ -1,4 +1,5 @@
 import http from '@ohos.net.http'
+import AppStorage from '@ohos.app.ability.common'
 
 export class LoginData {
   account: string = ''
@@ -40,6 +41,7 @@ export interface UserInfo {
   account: string
   name: string
   profile_picture_id: string
+  status?: string
 }
 
 export interface UserInfoResult {
@@ -211,7 +213,8 @@ export async function getUserInfo(userId: string): Promise<UserInfoResult> {
           data: {
             account: body.account || '',
             name: body.name || '',
-            profile_picture_id: body.profile_picture_id !== undefined ? String(body.profile_picture_id) : '0'
+            profile_picture_id: body.profile_picture_id !== undefined ? String(body.profile_picture_id) : '0',
+            status: body.status || ''
           }
         }
       }
@@ -225,5 +228,81 @@ export async function getUserInfo(userId: string): Promise<UserInfoResult> {
     return { success: false, message: '请求失败' }
   } finally {
     client.destroy()
+  }
+}
+
+/**
+ * 退出登录
+ */
+export function logout(): void {
+  // 清除 AppStorage 中的用户ID
+  AppStorage.delete('userId');
+  console.info('[logout] 退出登录成功');
+}
+
+/**
+ * 更新用户信息
+ */
+export async function updateUserInfo(userId: string, name: string, status: string, profilePictureId: string): Promise<RegisterResult> {
+  const url = 'http://146.56.215.115:10001/api/v1/service';
+  
+  class UpdatePayload {
+    operation: string = 'recompose_personal_homepage';
+    table_name: string = 'user';
+    data: UpdateData = new UpdateData();
+  }
+  
+  class UpdateData {
+    user_id: string = '';
+    name: string = '';
+    status: string = '';
+    profile_picture_id: string = '';
+  }
+  
+  const payload: UpdatePayload = new UpdatePayload();
+  payload.data.user_id = userId;
+  payload.data.name = name;
+  payload.data.status = status;
+  payload.data.profile_picture_id = profilePictureId;
+
+  console.info(`[updateUserInfo] 发起请求，payload: ${JSON.stringify(payload)}`);
+
+  const client = http.createHttp();
+  try {
+    const options: http.HttpRequestOptions = new HttpOptions();
+    options.extraData = JSON.stringify(payload);
+    
+    const res = await client.request(url, options);
+    const ok = res.responseCode === 200;
+    
+    console.info(`[updateUserInfo] 响应状态码: ${res.responseCode}`);
+    console.info(`[updateUserInfo] 响应内容: ${res.result}`);
+    
+    let body: LoginResponse | null = null;
+    const raw: string = typeof res.result === 'string' ? (res.result as string) : '';
+    
+    if (raw) {
+      try {
+        body = JSON.parse(raw) as LoginResponse;
+      } catch (_e) {
+        body = null;
+      }
+    }
+
+    if (ok) {
+      if (body && body.result === 'success') {
+        return { success: true, message: '更新成功' };
+      } else {
+        const msg: string = body && body.text ? body.text : '更新失败';
+        return { success: false, message: msg };
+      }
+    } else {
+      return { success: false, message: '网络错误' };
+    }
+  } catch (err) {
+    console.error(`[updateUserInfo] 请求异常: ${JSON.stringify(err)}`);
+    return { success: false, message: '请求失败' };
+  } finally {
+    client.destroy();
   }
 }

@@ -9,6 +9,7 @@
     "pages/HardwareIndexPage",
     "pages/favorite/Favorite",
     "pages/moments/MomentsPage",
-    "pages/moments/PublishMomentPage"
+    "pages/moments/PublishMomentPage",
+    "pages/mine/PersonalInfoPage"
   ]
 }

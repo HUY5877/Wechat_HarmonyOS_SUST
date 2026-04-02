@@ -3,7 +3,8 @@ import ListMenuItem from '../../component/ListMenuItem'
 import { PhotoPickerUtils } from '../../utils/PhotoPickerUtils'
 import WindowManager from '../../utils/WindowManager'
 import { Toast } from '../../utils/Toast'
-import { getUserInfo } from '../../utils/LoginApi'
+import { getUserInfo, logout } from '../../utils/LoginApi'
+import promptAction from '@ohos.promptAction'
 
 @Preview
 @Component
@@ -12,13 +13,45 @@ export default struct Mine {
   @StorageProp('userId') userId: string = '未登录'
   @State userName: string = '加载中...'
   @State userAccount: string = '加载中...'
+  @State userStatus: string = ''
+  private refreshTimer: number = 0
 
   aboutToAppear() {
     if (this.userId !== '未登录') {
       this.fetchUserInfo()
+      // 每1秒自动刷新一次用户信息
+      this.refreshTimer = setInterval(() => {
+        console.info('[Mine] 定时刷新用户信息')
+        this.fetchUserInfo()
+      }, 1000)
     } else {
       this.userName = '未登录'
       this.userAccount = '-'
+    }
+  }
+
+  aboutToDisappear() {
+    // 清除定时器，避免内存泄漏
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer)
+      this.refreshTimer = 0
+      console.info('[Mine] 清除刷新定时器')
+    }
+  }
+
+  onPageShow() {
+    // 每次页面显示时都重新获取用户信息，确保数据是最新的
+    if (this.userId !== '未登录') {
+      console.info('[Mine] 页面显示，开始获取最新用户信息')
+      this.fetchUserInfo()
+    }
+  }
+
+  // 当页面从后台返回时也重新获取用户信息
+  onForeground() {
+    if (this.userId !== '未登录') {
+      console.info('[Mine] 页面从后台返回，开始获取最新用户信息')
+      this.fetchUserInfo()
     }
   }
 
@@ -30,6 +63,7 @@ export default struct Mine {
       if (res.success && res.data) {
         this.userName = res.data.name || '无名氏'
         this.userAccount = res.data.account || '未知账号'
+        this.userStatus = res.data.status || ''
         
         // 获取后端的头像ID
         const avatarId = String(res.data.profile_picture_id)
@@ -48,12 +82,14 @@ export default struct Mine {
         Toast.show(res.message || '获取用户信息失败')
         this.userName = '未知用户'
         this.userAccount = '-'
+        this.userStatus = ''
       }
     } catch (err) {
       console.error(`[Mine] 获取用户信息异常: ${JSON.stringify(err)}`)
       Toast.show('请求用户信息失败')
       this.userName = '未知用户'
       this.userAccount = '-'
+      this.userStatus = ''
     }
   }
 
@@ -66,19 +102,11 @@ export default struct Mine {
           .height(70)
           .margin({ left: 25, right: 10 })
           .borderRadius(8)
-          .onClick(() => {
-            PhotoPickerUtils.openGallery(
-              uri => {
-                this.imgPath = uri;
-              }, errMsg => {
-              Toast.show(errMsg)
-            })
-          })
 
         Column() {
-          Text(`用户ID: ${this.userName}`)
+          Text(`昵称：${this.userName}`)
             .fontColor(Color.Black)
-            .fontSize(26)
+            .fontSize(16)
             .fontWeight(700)
 
           Text(`微信号：${this.userAccount}`)
@@ -86,20 +114,21 @@ export default struct Mine {
             .fontSize(16)
             .margin({ top: 15 })
 
-          Text('+ 状态')
-            .fontColor(Color.Grey)
-            .margin({ top: 20 })
-            .padding({ left: 8, right: 8 })
-            .height(25)
+          Text(this.userStatus || '请选择状态')
+            .fontColor(this.userStatus ? Color.Black : '#999999')
+            .margin({ top: 15 })
+            .padding({ left: 10, right: 10 })
+            .height(30)
             .fontSize(15)
             .borderRadius(20)
-            .height(26)
             .textAlign(TextAlign.Center)
-            .borderWidth(0.7)
-            .borderColor('#666')
-            .backgroundColor(Color.White)
+            .borderWidth(1)
+            .borderColor('#07c160')
+            .backgroundColor('#f0f9ff')
+            .onClick(() => {
+              router.pushUrl({ url: 'pages/mine/PersonalInfoPage' })
+            })
         }
-        .margin({ top: 40 })
         .alignItems(HorizontalAlign.Start)
 
         Blank()
@@ -119,7 +148,7 @@ export default struct Mine {
       .backgroundColor(Color.White)
       .padding({ top: WindowManager.statusBarHeight })
       .onClick(() => {
-        router.pushUrl({ url: 'pages/qrcode/MyQrCodePage' })
+        router.pushUrl({ url: 'pages/mine/PersonalInfoPage' })
       })
 
       Divider()
@@ -154,7 +183,9 @@ export default struct Mine {
         title: "朋友圈",
         iconSrc: $r('app.media.ic_moment_pic')
       })
-        .onClick(unDevTip)
+        .onClick(() => {
+          router.pushUrl({ url: 'pages/moments/MomentsPage' })
+        })
       Divider()
         .vertical(false)
         .color("#f3f3f3")
@@ -183,11 +214,65 @@ export default struct Mine {
         iconSrc: $r('app.media.ic_setting')
       })
         .onClick(unDevTip)
+
+      // 退出登录按钮
+      if (this.userId !== '未登录') {
+        Button("退出登录")
+          .width('90%')
+          .height(45)
+          .margin({ top: 30, bottom: 20 })
+          .backgroundColor('#ff4d4f')
+          .fontColor(Color.White)
+          .fontSize(16)
+          .borderRadius(8)
+          .onClick(() => {
+            this.showLogoutConfirm();
+          })
+      }
     }
     .width("100%")
     .height("100%")
     .backgroundColor("#f0f0f0")
 
+  }
+
+  /**
+   * 显示退出登录确认对话框
+   */
+  private showLogoutConfirm() {
+    promptAction.showDialog({
+      message: "确定要退出登录吗？",
+      buttons: [
+        {
+          text: "取消",
+          color: "#666666"
+        },
+        {
+          text: "确定",
+          color: "#ff4d4f"
+        }
+      ]
+    }).then(result => {
+      if (result.index === 1) {
+        // 用户点击了确定
+        this.performLogout();
+      }
+    });
+  }
+
+  /**
+   * 执行退出登录操作
+   */
+  private performLogout() {
+    try {
+      logout();
+      Toast.show("退出登录成功");
+      // 跳转到登录页面
+      router.replaceUrl({ url: 'pages/log_in/Log_in' });
+    } catch (error) {
+      console.error('退出登录失败:', error);
+      Toast.show("退出登录失败");
+    }
   }
 }
 
