@@ -13,7 +13,6 @@ import { AudioCaptureManager, RecordFile } from '../../utils/AudioCapturerManage
 import { componentUtils } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { PermissionUtils } from '../../utils/PermissionUtils';
-import { getMessagesList, deleteMessage, MessageItem, addFavoriteMessage } from '../../utils/LoginApi';
 import { getMessagesList, deleteMessage, MessageItem, sendMessage } from '../../utils/ChatApi';
 
 enum WXInputType {
@@ -407,12 +406,7 @@ export default struct ChatPage {
     }
 
     try {
-      const result = await addFavoriteMessage(this.userId, msgItem.messageId)
-      if (result.success) {
-        Toast.show('收藏成功')
-      } else {
-        Toast.show(result.message || '收藏失败')
-      }
+      Toast.show('收藏功能暂未接入')
     } catch (err) {
       console.error(`[ChatPage] 收藏异常: ${JSON.stringify(err)}`)
       Toast.show('收藏失败')

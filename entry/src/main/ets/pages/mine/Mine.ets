@@ -58,15 +58,15 @@ export default struct Mine {
   private async fetchUserInfo() {
     try {
       console.info(`[Mine] 准备获取用户信息，userId: ${this.userId}`)
-      const res = await getUserInfo(this.userId) // UserInfo | null
+      const res = await getUserInfo(this.userId)
       console.info(`[Mine] 获取用户信息结果: ${JSON.stringify(res)}`)
-      if (res) {
-        this.userName = res.name || '无名氏'
-        this.userAccount = res.account || '未知账号'
-        this.userStatus = res.status || ''
+      if (res && res.success && res.data) {
+        this.userName = res.data.name || '无名氏'
+        this.userAccount = res.data.account || '未知账号'
+        this.userStatus = ''
 
         // 获取后端的头像ID
-        const avatarId = String(res.profile_picture_id)
+        const avatarId = String(res.data.profile_picture_id || '0')
         console.info(`[Mine] 尝试加载头像ID: ${avatarId}`)
         if (avatarId === '0') {
           this.imgPath = $r('app.media.avatar_0')

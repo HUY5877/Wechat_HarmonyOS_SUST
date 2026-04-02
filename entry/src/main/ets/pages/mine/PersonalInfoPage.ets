@@ -28,11 +28,11 @@ export default struct PersonalInfoPage {
     this.isLoading = true
     try {
       const res = await getUserInfo(this.userId)
-      if (res) {
-        this.userName = res.name || '无名氏'
-        this.userAccount = res.account || '未知账号'
-        this.userStatus = res.status || ''
-        this.profilePictureId = res.profile_picture_id || '0'
+      if (res && res.success && res.data) {
+        this.userName = res.data.name || '无名氏'
+        this.userAccount = res.data.account || '未知账号'
+        this.userStatus = ''
+        this.profilePictureId = res.data.profile_picture_id || '0'
         
         // 根据数据库中的头像ID，映射到本地的资源图片
         if (this.profilePictureId === '0') {

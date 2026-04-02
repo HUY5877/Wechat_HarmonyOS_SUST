@@ -1,8 +1,50 @@
 import http from '@ohos.net.http'
+import AppStorage from '@ohos.app.ability.common'
 
 export class LoginData {
   account: string = ''
   password: string = ''
+}
+
+export function logout(): void {
+  try {
+    AppStorage.delete('userId')
+  } catch (_e) {}
+}
+
+export async function updateUserInfo(userId: string, name: string, status: string, profilePictureId: string): Promise<UpdateUserInfoResult> {
+  const url = 'http://146.56.215.115:10001/api/v1/service'
+  const payload: UpdateUserInfoPayload = new UpdateUserInfoPayload()
+  payload.data.user_id = String(userId)
+  payload.data.name = name
+  payload.data.status = status
+  payload.data.profile_picture_id = profilePictureId
+
+  const client = http.createHttp()
+  try {
+    const options: http.HttpRequestOptions = new HttpOptions()
+    options.extraData = JSON.stringify(payload)
+
+    const res = await client.request(url, options)
+    const ok = res.responseCode === 200
+    const raw: string = typeof res.result === 'string' ? (res.result as string) : ''
+    if (ok && raw) {
+      try {
+        const parsed = JSON.parse(raw) as LoginResponse
+        if (parsed && parsed.result === 'success') {
+          return { success: true, message: '更新成功' }
+        }
+        return { success: false, message: parsed && parsed.text ? parsed.text : '更新失败' }
+      } catch (_e) {
+        return { success: false, message: '解析失败' }
+      }
+    }
+    return { success: false, message: '网络错误' }
+  } catch (_err) {
+    return { success: false, message: '请求失败' }
+  } finally {
+    client.destroy()
+  }
 }
 
 export class LoginPayload {
@@ -40,6 +82,8 @@ export interface UserInfo {
   account: string
   name: string
   profile_picture_id: string
+  user_id?: string
+  status?: string
 }
 
 export interface UserInfoResult {
@@ -62,6 +106,24 @@ export class UserInfoPayload {
 export interface RegisterResult {
   success: boolean
   message: string
+}
+
+export interface UpdateUserInfoResult {
+  success: boolean
+  message: string
+}
+
+export class UpdateUserInfoData {
+  user_id?: string
+  name?: string
+  status?: string
+  profile_picture_id?: string
+}
+
+export class UpdateUserInfoPayload {
+  operation: string = 'recompose_personal_homepage'
+  table_name: string = 'user'
+  data: UpdateUserInfoData = new UpdateUserInfoData()
 }
 
 export class RegisterData extends LoginData {
