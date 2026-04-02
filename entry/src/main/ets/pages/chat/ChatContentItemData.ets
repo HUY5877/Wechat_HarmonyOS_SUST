@@ -6,4 +6,6 @@ export interface ChatContentItemData {
   img?: Resource
   msgType?: number
   self?: Boolean
+  messageIndex?: number
+  messageId?: string
 }

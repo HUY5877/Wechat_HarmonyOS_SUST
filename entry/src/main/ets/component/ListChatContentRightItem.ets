@@ -5,6 +5,7 @@ import AudioRendererManager from '../utils/AudioRendererManager'
 @Component
 export default struct ListChatContentRightItem {
   data?: ChatContentItemData
+  onLongPress: (index?: number) => void = () => {}
 
   build() {
     Row() {
@@ -22,6 +23,12 @@ export default struct ListChatContentRightItem {
             })
             .borderRadius(4)
             .backgroundColor("#a9ea7a")
+            .gesture(
+              LongPressGesture()
+                .onAction(() => {
+                  this.onLongPress(this.data?.messageIndex)
+                })
+            )
         } else if (this.data?.msgType === 2) {
           Row() {
             Text(this.data?.msg)
@@ -44,6 +51,12 @@ export default struct ListChatContentRightItem {
           .borderRadius(4)
           .backgroundColor("#a9ea7a")
           .onClick(this.playVoice)
+          .gesture(
+            LongPressGesture()
+              .onAction(() => {
+                this.onLongPress(this.data?.messageIndex)
+              })
+          )
 
         } else {
           Image(this.data?.img)
@@ -51,6 +64,12 @@ export default struct ListChatContentRightItem {
             .borderRadius(4)
             .objectFit(ImageFit.Auto)
             .backgroundColor("#a9ea7a")
+            .gesture(
+              LongPressGesture()
+                .onAction(() => {
+                  this.onLongPress(this.data?.messageIndex)
+                })
+            )
         }
       }
       .margin({ left: 80 })
@@ -75,7 +94,7 @@ export default struct ListChatContentRightItem {
     }.alignItems(VerticalAlign.Top)
   }
 
-  playVoice = async () => {
+  playVoice = async (): Promise<void> => {
     if (this.data?.voicePath) {
       AudioRendererManager.doPlay(this.data?.voicePath)
     }
@@ -85,5 +104,3 @@ export default struct ListChatContentRightItem {
     AudioRendererManager.release()
   }
 }
-
-
