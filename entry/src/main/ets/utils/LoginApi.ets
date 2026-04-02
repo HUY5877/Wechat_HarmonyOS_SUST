@@ -564,6 +564,85 @@ export async function sendMessage(userId: string, friendId: string, content: str
   }
 }
 
+class FavoriteMessageData {
+  user_id: string = ''
+  message_id: string = ''
+}
+
+class FavoriteMessagePayload {
+  operation: string = 'add_favorites_message'
+  table_name: string = 'favorites'
+  data: FavoriteMessageData = new FavoriteMessageData()
+}
+
+class FavoriteMessageResponse {
+  result: string = ''
+  user_id: string = ''
+  text: string = ''
+}
+
+class FavoriteMessageResult {
+  success: boolean = false
+  message: string = ''
+}
+
+export async function addFavoriteMessage(userId: string, messageId: string): Promise<FavoriteMessageResult> {
+  const url = 'http://146.56.215.115:10001/api/v1/service'
+  const payload: FavoriteMessagePayload = new FavoriteMessagePayload()
+  payload.data.user_id = String(userId)
+  payload.data.message_id = String(messageId)
+
+  console.info(`[addFavoriteMessage] 发起请求，userId: ${userId}, messageId: ${messageId}`)
+
+  const client = http.createHttp()
+  try {
+    const options: http.HttpRequestOptions = new HttpOptions()
+    options.extraData = JSON.stringify(payload)
+
+    const res = await client.request(url, options)
+    const ok = res.responseCode === 200
+
+    console.info(`[addFavoriteMessage] 响应状态码: ${res.responseCode}`)
+    console.info(`[addFavoriteMessage] 响应内容: ${res.result}`)
+
+    const raw: string = typeof res.result === 'string' ? (res.result as string) : ''
+
+    if (raw && ok) {
+      try {
+        const parsedObj: FavoriteMessageResponse = JSON.parse(raw)
+        const result: FavoriteMessageResult = new FavoriteMessageResult()
+        if (parsedObj.result === 'success') {
+          result.success = true
+          result.message = '收藏成功'
+          return result
+        } else {
+          result.success = false
+          result.message = parsedObj.text || '收藏失败'
+          return result
+        }
+      } catch (_e) {
+        const result: FavoriteMessageResult = new FavoriteMessageResult()
+        result.success = false
+        result.message = '解析收藏结果失败'
+        return result
+      }
+    }
+
+    const result: FavoriteMessageResult = new FavoriteMessageResult()
+    result.success = false
+    result.message = '请求失败'
+    return result
+  } catch (err) {
+    console.error(`[addFavoriteMessage] 请求异常: ${JSON.stringify(err)}`)
+    const result: FavoriteMessageResult = new FavoriteMessageResult()
+    result.success = false
+    result.message = '请求失败'
+    return result
+  } finally {
+    client.destroy()
+  }
+}
+
 export interface SearchMessageResult {
   success: boolean
   message: string

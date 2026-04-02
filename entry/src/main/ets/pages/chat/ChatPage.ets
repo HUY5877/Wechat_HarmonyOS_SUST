@@ -13,7 +13,7 @@ import { AudioCaptureManager, RecordFile } from '../../utils/AudioCapturerManage
 import { componentUtils } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { PermissionUtils } from '../../utils/PermissionUtils';
-import { getMessagesList, deleteMessage, MessageItem } from '../../utils/LoginApi';
+import { getMessagesList, deleteMessage, MessageItem, addFavoriteMessage } from '../../utils/LoginApi';
 
 enum WXInputType {
   /**
@@ -389,6 +389,35 @@ export default struct ChatPage {
     this.selectedMessageIndex = -1
   }
 
+  onFavoriteMessage = async (): Promise<void> => {
+    if (this.selectedMessageIndex < 0 || this.selectedMessageIndex >= this.dataList.length) {
+      Toast.show('消息无效')
+      this.showMessageMenu = false
+      return
+    }
+
+    const msgItem = this.dataList[this.selectedMessageIndex]
+    if (!msgItem.messageId) {
+      Toast.show('该消息无法收藏')
+      this.showMessageMenu = false
+      return
+    }
+
+    try {
+      const result = await addFavoriteMessage(this.userId, msgItem.messageId)
+      if (result.success) {
+        Toast.show('收藏成功')
+      } else {
+        Toast.show(result.message || '收藏失败')
+      }
+    } catch (err) {
+      console.error(`[ChatPage] 收藏异常: ${JSON.stringify(err)}`)
+      Toast.show('收藏失败')
+    }
+
+    this.showMessageMenu = false
+  }
+
   // 开始录音
   onStartRecord = () => {
     // 文件名  唯一
@@ -688,6 +717,17 @@ export default struct ChatPage {
           .layoutWeight(1)
           .onClick(() => {
             this.onForwardMessage()
+          })
+
+        Button('收藏')
+          .fontSize(14)
+          .fontColor('#666666')
+          .backgroundColor('#ffffff')
+          .borderRadius(8)
+          .height(40)
+          .layoutWeight(1)
+          .onClick(() => {
+            this.onFavoriteMessage()
           })
 
         Button('取消')
