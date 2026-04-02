@@ -41,11 +41,11 @@ export default struct AddFriendPage {
       Column() {
         Row() {
           TextInput({ placeholder: "微信号/手机号", text: this.searchText })
-            .width("100%")
+            .layoutWeight(1)
             .height(50)
             .fontSize(17)
             .backgroundColor(Color.White)
-            .padding({ left: 16, right: 50 })
+            .padding({ left: 16, right: 16 })
             .borderRadius(0)
             .onChange((value: string) => {
               this.searchText = value
@@ -54,7 +54,7 @@ export default struct AddFriendPage {
           Text("搜索")
             .fontSize(16)
             .fontColor("#57be6a")
-            .margin({ right: 16 })
+            .margin({ left: 12, right: 16 })
             .onClick(() => {
               this.searchByAccount()
             })
@@ -135,20 +135,27 @@ export default struct AddFriendPage {
     this.searchResults = []
 
     try {
-      const result = await ContactApi.addFriend(this.currentUserId, this.searchText)
-      if (result.result === 'success') {
-        this.searchResults = [{
-          friend_id: '',
-          account: this.searchText,
-          name: this.searchText,
-          status: '',
-          profile_picture_id: ''
-        } as SearchResult]
+      // 使用 searchContacts 搜索用户
+      const results = await ContactApi.searchContacts(this.currentUserId, this.searchText)
+      if (results && results.length > 0) {
+        // 获取每个搜索结果的详细信息
+        for (const friend of results) {
+          const detail = await ContactApi.getFriendDetail(friend.friend_id)
+          if (detail) {
+            this.searchResults.push({
+              friend_id: detail.friend_id,
+              account: detail.account,
+              name: detail.name,
+              status: detail.status,
+              profile_picture_id: detail.profile_picture_id
+            })
+          }
+        }
       } else {
-        console.log(result.text || '未找到该用户')
+        console.log('未找到该用户')
       }
     } catch (error) {
-      console.log('搜索失败')
+      console.log('搜索失败:', error)
     }
 
     this.isSearching = false
@@ -175,10 +182,26 @@ export default struct AddFriendPage {
           try {
             const result = await ContactApi.addFriend(this.currentUserId, account)
             if (result.result === 'success') {
-              router.back()
+              // 添加成功，显示提示
               promptAction.showToast({
-                message: '已发送好友请求',
+                message: '添加成功',
                 duration: 2000
+              })
+              // 返回到主页 Index，并选中通讯录 Tab (index=1)
+              router.replaceUrl({ 
+                url: 'pages/Index',
+                params: { tabIndex: 1 }
+              })
+            } else if (result.text && result.text.includes('已拥有好友')) {
+              // 已经是好友
+              promptAction.showToast({
+                message: '该用户已经是您的好友',
+                duration: 2000
+              })
+              // 返回到主页 Index，并选中通讯录 Tab (index=1)
+              router.replaceUrl({ 
+                url: 'pages/Index',
+                params: { tabIndex: 1 }
               })
             } else {
               promptAction.showToast({

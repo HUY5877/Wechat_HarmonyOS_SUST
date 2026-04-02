@@ -98,7 +98,8 @@ export default struct Contact {
       }
       grouped[firstLetter].push({
         name: friendName,
-        head: getAvatarResource(friend.profile_picture_id || '0')
+        head: getAvatarResource(friend.profile_picture_id || '0'),
+        friend_id: friend.friend_id
       })
     })
 
@@ -197,10 +198,17 @@ export default struct Contact {
                     ListContactItem({ head: contact.head, name: contact.name })
                   }
                   .onClick(() => {
-                    router.pushUrl({
-                      url: 'pages/chat/ChatPage',
-                      params: { name: contact.name }
-                    })
+                    if (contact.friend_id) {
+                      router.pushUrl({
+                        url: 'pages/chat/ChatPage',
+                        params: { 
+                          name: contact.name,
+                          friend_id: contact.friend_id
+                        }
+                      })
+                    } else {
+                      prompt.showToast({ message: '无法获取好友ID' })
+                    }
                   })
                 })
               }

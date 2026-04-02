@@ -116,9 +116,12 @@ export default struct Mine {
         .strokeWidth(10)
       ListMenuItem({
         title: "服务",
-        iconSrc: $r('app.media.ic_service')
+        iconSrc: $r('app.media.ic_service'),
+        clickHandler: () => {
+          console.log('点击了服务选项')
+          router.pushUrl({ url: 'pages/mine/ServicePage' })
+        }
       })
-      .onClick(unDevTip)
       Divider()
         .vertical(false)
         .color("#f3f3f3")

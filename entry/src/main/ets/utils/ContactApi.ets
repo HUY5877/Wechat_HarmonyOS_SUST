@@ -32,6 +32,7 @@ interface RequestData {
   user_id?: string
   friend_name?: string
   account?: string
+  id?: string
 }
 
 export default class ContactApi {
@@ -109,47 +110,133 @@ export default class ContactApi {
   }
 
   static async getFriendDetail(friendId: string): Promise<FriendDetail | null> {
+    console.log('查询好友详情, friendId:', friendId);
+    // 先尝试使用 query_friend_homepage 接口
     const data: RequestData = { user_id: friendId };
-    const result: ApiResponse | ContactApiResult | AddFriendResult | FriendDetail = await ContactApi.request('query_friend_homepage', 'user', data);
+    let result = await ContactApi.request('query_friend_homepage', 'user', data);
     
-    // 检查返回数据是否符合 FriendDetail 结构
-    const detail = result as FriendDetail;
-    if (detail && detail.friend_id && detail.name) {
-      return detail;
+    console.log('好友详情返回结果(query_friend_homepage):', JSON.stringify(result));
+    
+    // 将结果转为对象处理不同格式
+    let resultStr = JSON.stringify(result);
+    let parsedResult = JSON.parse(resultStr) as Record<string, string>;
+    
+    // 检查是否返回失败，如果失败则尝试 query_user 接口
+    if (parsedResult && parsedResult.result === 'fail') {
+      console.log('query_friend_homepage 失败，尝试 query_user 接口');
+      const data2: RequestData = { id: friendId };
+      result = await ContactApi.request('query_user', 'user', data2);
+      console.log('好友详情返回结果(query_user):', JSON.stringify(result));
+      resultStr = JSON.stringify(result);
+      parsedResult = JSON.parse(resultStr) as Record<string, string>;
     }
+    
+    // 格式1: { friend_id: '11', account: 'test', name: 'xxx', status: 'xxx', profile_picture_id: '1' }
+    if (parsedResult && parsedResult.friend_id && parsedResult.name) {
+      console.log('找到好友详情:', parsedResult.name);
+      return {
+        friend_id: parsedResult.friend_id,
+        account: parsedResult.account || '',
+        name: parsedResult.name,
+        status: parsedResult.status || '',
+        profile_picture_id: parsedResult.profile_picture_id || '0'
+      };
+    }
+    
+    // 格式2: { id: '13', account: '111', nickname: '111', ... }
+    if (parsedResult && parsedResult.id) {
+      console.log('找到好友详情(格式2):', parsedResult.nickname || parsedResult.account);
+      return {
+        friend_id: parsedResult.id,
+        account: parsedResult.account || '',
+        name: parsedResult.nickname || parsedResult.account || '未知用户',
+        status: parsedResult.status || '',
+        profile_picture_id: parsedResult.profile_picture_id || '0'
+      };
+    }
+    
+    console.log('未找到好友详情或返回格式不匹配');
     return null;
   }
 
-  static async searchContacts(userId: string, friendName: string): Promise<FriendInfo[]> {
+  static async searchContacts(userId: string, account: string): Promise<FriendInfo[]> {
     try {
-      const data: RequestData = {
-        user_id: userId,
-        friend_name: friendName
-      };
-      const result = await ContactApi.request('query_contacts_', 'contacts', data) as ContactApiResult;
+      console.log('开始搜索用户, account:', account);
       
-      // 如果API返回了结果，直接返回
-      if (result && result.user_id && result.user_id.length > 0) {
-        console.log('API搜索结果:', JSON.stringify(result.user_id));
-        return result.user_id;
+      // 方法1: 如果 account 是纯数字，尝试作为 friend_id 查询用户详情
+      if (/^\d+$/.test(account)) {
+        console.log('尝试使用 query_friend_homepage 查询, user_id:', account);
+        let data: RequestData = { user_id: account };
+        let result = await ContactApi.request('query_friend_homepage', 'user', data);
+        console.log('query_friend_homepage 结果:', JSON.stringify(result));
+        
+        const parsedResult = JSON.parse(JSON.stringify(result)) as Record<string, string>;
+        
+        // 检查是否返回了有效的用户数据
+        if (parsedResult && parsedResult.friend_id && parsedResult.name) {
+          console.log('找到用户:', parsedResult.name);
+          return [{
+            friend_id: parsedResult.friend_id,
+            name: parsedResult.name
+          }];
+        }
       }
+
+      // 方法2: 在通讯录中查找匹配的 account
+      console.log('尝试从通讯录中查找');
+      const contacts = await ContactApi.getContacts(userId);
       
-      // 如果API没有返回结果，使用本地搜索作为备份
-      console.log('API没有返回结果，使用本地搜索');
-      const allContacts = await ContactApi.getContacts(userId);
-      const filteredContacts = allContacts.filter(contact => 
-        contact.name.toLowerCase().includes(friendName.toLowerCase())
-      );
-      console.log('本地搜索结果:', JSON.stringify(filteredContacts));
-      return filteredContacts;
+      for (const contact of contacts) {
+        const detail = await ContactApi.getFriendDetail(contact.friend_id);
+        if (detail && detail.account === account) {
+          console.log('在通讯录中找到匹配的用户:', detail.name);
+          return [{
+            friend_id: detail.friend_id,
+            name: detail.name
+          }];
+        }
+      }
+
+      // 方法3: 尝试添加好友来验证用户是否存在
+      // 如果返回"已拥有好友"，说明用户存在且已经是好友
+      // 如果返回"success"，说明用户存在且添加成功
+      console.log('尝试通过 add_friend 验证用户是否存在');
+      const addResult = await ContactApi.addFriend(userId, account);
+      console.log('add_friend 结果:', JSON.stringify(addResult));
+      
+      if (addResult.result === 'success') {
+        // 添加成功，重新获取好友列表找到新添加的好友
+        console.log('添加成功，重新获取好友信息');
+        const newContacts = await ContactApi.getContacts(userId);
+        for (const contact of newContacts) {
+          const detail = await ContactApi.getFriendDetail(contact.friend_id);
+          if (detail && detail.account === account) {
+            return [{
+              friend_id: detail.friend_id,
+              name: detail.name
+            }];
+          }
+        }
+      } else if (addResult.text && addResult.text.includes('已拥有好友')) {
+        // 已经是好友，在通讯录中查找
+        console.log('已经是好友，在通讯录中查找');
+        const allContacts = await ContactApi.getContacts(userId);
+        for (const contact of allContacts) {
+          const detail = await ContactApi.getFriendDetail(contact.friend_id);
+          if (detail && detail.account === account) {
+            return [{
+              friend_id: detail.friend_id,
+              name: detail.name
+            }];
+          }
+        }
+      }
+
+      console.log('未找到该账号的用户');
+      return [];
     } catch (error) {
       console.error('搜索失败:', error);
-      // 搜索失败时，使用本地搜索作为备份
-      const allContacts = await ContactApi.getContacts(userId);
-      const filteredContacts = allContacts.filter(contact => 
-        contact.name.toLowerCase().includes(friendName.toLowerCase())
-      );
-      return filteredContacts;
+      return [];
     }
   }
 

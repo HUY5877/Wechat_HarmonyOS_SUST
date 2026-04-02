@@ -129,26 +129,39 @@ export default struct ContactSearchPage {
     }
 
     this.isSearching = true
+    this.searchResults = []
 
     try {
-      const result = await ContactApi.searchContacts(this.userId, this.searchText)
+      // 根据 name 搜索朋友
+      const name = this.searchText.trim()
+      console.log('根据 name 搜索:', name)
       
-      // 获取每个好友的详细信息，包括头像ID
-      const searchResultsWithDetails: SearchResult[] = []
-      for (const contact of result) {
-        const detail = await ContactApi.getFriendDetail(contact.friend_id)
-        if (detail) {
-          searchResultsWithDetails.push({
-            friend_id: detail.friend_id,
-            name: detail.name,
-            profile_picture_id: detail.profile_picture_id || '0'
-          })
+      // 先获取所有联系人
+      const allContacts = await ContactApi.getContacts(this.userId)
+      
+      // 过滤出名字匹配的朋友
+      const filteredContacts = allContacts.filter(contact => 
+        contact.name.toLowerCase().includes(name.toLowerCase())
+      )
+      
+      if (filteredContacts.length > 0) {
+        // 获取每个匹配朋友的详细信息
+        for (const contact of filteredContacts) {
+          const detail = await ContactApi.getFriendDetail(contact.friend_id)
+          if (detail) {
+            this.searchResults.push({
+              friend_id: detail.friend_id,
+              name: detail.name,
+              profile_picture_id: detail.profile_picture_id || '0'
+            })
+          }
         }
+        console.log('找到好友数量:', this.searchResults.length)
+      } else {
+        console.log('未找到该 name 的朋友')
       }
-      
-      this.searchResults = searchResultsWithDetails
     } catch (error) {
-      console.log('搜索失败')
+      console.log('搜索失败:', error)
     }
 
     this.isSearching = false

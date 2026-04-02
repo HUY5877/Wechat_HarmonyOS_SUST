@@ -1,19 +1,19 @@
 import router from '@ohos.router'
 import WindowManager from '../../utils/WindowManager'
-import { deleteFavorite, FavoriteRecord } from '../../utils/FavoriteApi'
+import { FavoriteApi, FavoriteItem } from '../../utils/FavoriteApi'
 import { Toast } from '../../utils/Toast'
 
 @Entry
 @Component
 export default struct FavoriteDetail {
-  @State record: FavoriteRecord | null = null
+  @State record: FavoriteItem | null = null
   @StorageProp('userId') userId: string = ''
   @State isDeleting: boolean = false
 
   aboutToAppear() {
     const params = router.getParams() as Record<string, Object>
     if (params && params['record']) {
-      this.record = params['record'] as FavoriteRecord
+      this.record = params['record'] as FavoriteItem
     } else {
       Toast.show('参数错误')
       router.back()
@@ -24,12 +24,12 @@ export default struct FavoriteDetail {
     if (!this.userId || !this.record) return
     this.isDeleting = true
     try {
-      const res = await deleteFavorite(this.userId, this.record.message_id)
-      if (res.success) {
+      const res = await FavoriteApi.deleteFavorite(this.userId, this.record.message_id)
+      if (res.result === 'success') {
         Toast.show('删除成功')
         router.back()
       } else {
-        Toast.show(res.message)
+        Toast.show(res.text || '删除失败')
       }
     } catch (e) {
       Toast.show('删除失败')

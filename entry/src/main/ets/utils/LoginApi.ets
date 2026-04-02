@@ -169,4 +169,3 @@ export async function searchMessage(userId: string, friendId: string, keyword: s
  * Support for Friends/Messages - moved to individual services but keeping legacy imports if needed
  */
 export { getMessagesList, sendMessage, deleteMessage } from './ChatApi';
-export { getFriendsList } from './ContactApi';
