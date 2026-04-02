@@ -51,7 +51,7 @@ export default struct AddFriendPage {
               this.searchText = value
             })
 
-          Text("搜索")
+          Text("添加")
             .fontSize(16)
             .fontColor("#57be6a")
             .margin({ right: 16 })

@@ -3,16 +3,8 @@ import ListChatItem, { ChatItemData } from '../../component/ListChatItem'
 import WechatToolbar from '../../component/WechatToolbar'
 import { getFriendsList } from '../../utils/LoginApi'
 import { Toast } from '../../utils/Toast'
-
-const AVATAR_LIST: Resource[] = [
-  $r("app.media.ic_user_head1"),
-  $r("app.media.ic_user_head2"),
-  $r("app.media.ic_user_head3"),
-  $r("app.media.ic_user_head4"),
-  $r("app.media.ic_user_head5"),
-  $r("app.media.ic_user_head6"),
-  $r("app.media.ic_user_head7")
-]
+import ContactApi, { FriendDetail } from '../../utils/ContactApi'
+import { getAvatarResource } from '../../utils/AvatarUtils'
 
 @Preview
 @Component
@@ -39,14 +31,27 @@ export default struct Home {
         const friends = result.friends
 
         if (friends && friends.length > 0) {
-          this.chatList = friends.map((friend, index) => {
-            const chatItem: ChatItemData = {
-              headSrc: AVATAR_LIST[index % AVATAR_LIST.length],
-              nickname: friend.name || '未知好友',
-              friend_id: friend.friend_id
+          // 查询每个好友的详细信息以获取头像
+          const chatItems: ChatItemData[] = []
+          for (const friend of friends) {
+            console.info(`[Home] 查询好友详情，friend_id: ${friend.friend_id}`)
+            const detail: FriendDetail | null = await ContactApi.getFriendDetail(friend.friend_id)
+            if (detail) {
+              chatItems.push({
+                headSrc: getAvatarResource(detail.profile_picture_id || '0'),
+                nickname: detail.name || friend.name || '未知好友',
+                friend_id: friend.friend_id
+              })
+            } else {
+              // 如果获取不到详情，使用默认头像
+              chatItems.push({
+                headSrc: getAvatarResource('0'),
+                nickname: friend.name || '未知好友',
+                friend_id: friend.friend_id
+              })
             }
-            return chatItem
-          })
+          }
+          this.chatList = chatItems
           console.info(`[Home] 成功加载 ${this.chatList.length} 个好友`)
         } else {
           console.info(`[Home] 好友列表为空`)
