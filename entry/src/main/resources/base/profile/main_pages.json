@@ -11,6 +11,10 @@
     "pages/HardwareIndexPage",
     "pages/favorite/Favorite",
     "pages/contact/ContactSearchPage",
-    "pages/contact/AddFriendPage"
+    "pages/contact/AddFriendPage",
+    "pages/game2048/Game2048",
+    "pages/mine/SettingPage",
+    "pages/mine/AccountSecurityPage",
+    "pages/discovery/GamePage"
   ]
 }
