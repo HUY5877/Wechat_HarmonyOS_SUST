@@ -10,6 +10,7 @@
     "pages/favorite/Favorite",
     "pages/contact/Contact",
     "pages/contact/ContactSearchPage",
-    "pages/contact/AddFriendPage"
+    "pages/contact/AddFriendPage",
+    "pages/favorite/FavoriteDetail"
   ]
 }
