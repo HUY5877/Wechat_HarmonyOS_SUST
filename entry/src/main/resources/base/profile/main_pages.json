@@ -9,21 +9,23 @@
     "pages/chat/ForwardPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
+    "pages/favorite/Favorite",
     "pages/favorite/FavoriteDetail",
+    "pages/contact/Contact",
     "pages/contact/ContactSearchPage",
     "pages/contact/AddFriendPage",
     "pages/game2048/Game2048",
     "pages/mine/SettingPage",
     "pages/mine/AccountSecurityPage",
-    "pages/discovery/GamePage",
     "pages/mine/ServicePage",
     "pages/mine/WalletPage",
     "pages/mine/BalancePage",
     "pages/mine/LingqiantongPage",
     "pages/mine/BankCardPage",
-    "pages/favorite/Favorite",
     "pages/moments/MomentsPage",
     "pages/moments/PublishMomentPage",
-    "pages/mine/PersonalInfoPage"
+    "pages/mine/PersonalInfoPage",
+    "pages/mine/PaymentPage",
+    "pages/discovery/GamePage"
   ]
 }

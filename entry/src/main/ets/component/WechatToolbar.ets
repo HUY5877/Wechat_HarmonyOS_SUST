@@ -5,9 +5,9 @@ import WindowManager from '../utils/WindowManager'
 @Preview
 @Component
 export default struct WechatToolbar {
-  private title: string = "发现"
-  private onSearchClick?: () => void
-  private onAddClick?: () => void
+  title: string = "发现"
+  onSearchClick?: () => void
+  onAddClick?: () => void
 
   build() {
     Column() {
@@ -18,29 +18,43 @@ export default struct WechatToolbar {
           .fontWeight(500)
 
         Row() {
-          Image($r("app.media.ic_search"))
-            .width(22)
-            .height(22)
-            .margin({ right: 20 })
-            .onClick(() => {
-              if (this.onSearchClick) {
-                this.onSearchClick()
-              } else {
-                router.pushUrl({ url: 'pages/search/SearchPage' })
-              }
-            })
-          Image($r('app.media.ic_add'))
-            .width(25)
-            .height(25)
-            .margin({ right: 18 })
-            .onClick(() => {
-              if (this.onAddClick) {
-                this.onAddClick()
-              } else {
-                prompt.showToast({ message: "功能正在开发中...", duration: 2000 })
-                router.pushUrl({ url: 'pages/HardwareIndexPage' })
-              }
-            })
+          Column() {
+            Image($r("app.media.ic_search"))
+              .width(22)
+              .height(22)
+          }
+          .width(40)
+          .height(40)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+          .margin({ right: 10 })
+          .onClick(() => {
+            console.log('搜索按钮被点击');
+            if (this.onSearchClick) {
+              this.onSearchClick()
+            } else {
+              router.pushUrl({ url: 'pages/search/SearchPage' })
+            }
+          })
+          Column() {
+            Image($r('app.media.ic_add'))
+              .width(25)
+              .height(25)
+          }
+          .width(40)
+          .height(40)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+          .margin({ right: 10 })
+          .onClick(() => {
+            console.log('添加按钮被点击');
+            if (this.onAddClick) {
+              this.onAddClick()
+            } else {
+              prompt.showToast({ message: "功能正在开发中...", duration: 2000 })
+              router.pushUrl({ url: 'pages/HardwareIndexPage' })
+            }
+          })
         }
         .height("100%")
         .width("100%")

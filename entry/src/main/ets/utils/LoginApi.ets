@@ -151,13 +151,13 @@ export async function register(account: string, password: string, name: string, 
   try {
     const options: http.HttpRequestOptions = new HttpOptions()
     options.extraData = JSON.stringify(payload)
-    
+
     const res = await client.request(url, options)
     const ok = res.responseCode === 200
-    
+
     let body: LoginResponse | null = null
     const raw: string = typeof res.result === 'string' ? (res.result as string) : ''
-    
+
     if (raw) {
       try {
         body = JSON.parse(raw) as LoginResponse
@@ -193,13 +193,13 @@ export async function login(account: string, password: string): Promise<LoginRes
   try {
     const options: http.HttpRequestOptions = new HttpOptions()
     options.extraData = JSON.stringify(payload)
-    
+
     const res = await client.request(url, options)
     const ok = res.responseCode === 200
-    
+
     let body: LoginResponse | null = null
     const raw: string = typeof res.result === 'string' ? (res.result as string) : ''
-    
+
     if (raw) {
       try {
         body = JSON.parse(raw) as LoginResponse
@@ -236,7 +236,7 @@ export interface UserInfoResponse {
 export async function getUserInfo(userId: string): Promise<UserInfoResult> {
   const url = 'http://146.56.215.115:10001/api/v1/service'
   const payload: UserInfoPayload = new UserInfoPayload()
-  
+
   // 按照新的接口要求传递 user_id
   payload.data.user_id = String(userId)
 
@@ -246,16 +246,16 @@ export async function getUserInfo(userId: string): Promise<UserInfoResult> {
   try {
     const options: http.HttpRequestOptions = new HttpOptions()
     options.extraData = JSON.stringify(payload)
-    
+
     const res = await client.request(url, options)
     const ok = res.responseCode === 200
-    
+
     console.info(`[getUserInfo] 响应状态码: ${res.responseCode}`)
     console.info(`[getUserInfo] 响应内容: ${res.result}`)
-    
+
     let body: UserInfoResponse | null = null
     const raw: string = typeof res.result === 'string' ? (res.result as string) : ''
-    
+
     if (raw) {
       try {
         body = JSON.parse(raw) as UserInfoResponse
@@ -267,8 +267,8 @@ export async function getUserInfo(userId: string): Promise<UserInfoResult> {
     if (ok && body) {
       // 检查返回体是否包含有效的数据字段
       if (body.account || body.name) {
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: '获取成功',
           data: {
             account: body.account || '',
@@ -277,7 +277,7 @@ export async function getUserInfo(userId: string): Promise<UserInfoResult> {
           }
         }
       }
-      
+
       return { success: false, message: '获取用户信息失败: 数据为空' }
     } else {
       return { success: false, message: '网络错误' }

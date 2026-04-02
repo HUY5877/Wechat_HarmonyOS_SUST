@@ -3,6 +3,7 @@ import contact from './contact/Contact'
 import discovery from './discovery/Discovery'
 import mine from './mine/Mine'
 import WindowManager from '../utils/WindowManager'
+import router from '@ohos.router'
 
 @Entry
 @Component
@@ -12,6 +13,15 @@ struct Index {
   private tabTitles: string[] = ["微信", "通信录", "发现", "我"]
   private tabTextColors: string[] = ["#040404", "#57be6a"]
   private tabTipCounts: number[] = [5, 0, 8, 0]
+
+  aboutToAppear() {
+    // 检查路由参数，如果有 tabIndex 则切换到对应 Tab
+    const params = router.getParams() as Record<string, number>
+    if (params && params['tabIndex'] !== undefined) {
+      this.currentIndex = params['tabIndex']
+      this.tabController.changeIndex(this.currentIndex)
+    }
+  }
 
   build() {
     Column() {
