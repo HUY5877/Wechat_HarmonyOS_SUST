@@ -7,6 +7,7 @@
     "pages/chat/ChatPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
-    "pages/favorite/Favorite"
+    "pages/favorite/Favorite",
+    "pages/favorite/FavoriteDetail"
   ]
 }
