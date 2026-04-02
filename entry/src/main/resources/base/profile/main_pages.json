@@ -9,7 +9,8 @@
     "pages/chat/ForwardPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
-    "pages/favorite/Favorite",
+    "pages/favorite/Favorite"
+    "pages/favorite/FavoriteDetail"
     "pages/contact/ContactSearchPage",
     "pages/contact/AddFriendPage",
     "pages/game2048/Game2048",
