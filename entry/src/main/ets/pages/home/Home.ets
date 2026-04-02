@@ -18,7 +18,38 @@ const AVATAR_LIST: Resource[] = [
 @Component
 export default struct Home {
   @StorageProp('userId') userId: string = ''
-  @State chatList: ChatItemData[] = []
+  @State chatList: ChatItemData[] = [
+    {
+      headSrc: $r("app.media.ic_user_head2"),
+      nickname: "老婆",
+      content: "今晚给你做了好吃的，早点下班哦😊",
+      time: "17:21"
+    },
+    {
+      headSrc: $r("app.media.ic_user_head3"),
+      nickname: "游戏好友",
+      content: "我今天又拿了五杀，牛逼不？",
+      time: "15:38"
+    },
+    { headSrc: $r("app.media.ic_user_head4"),
+      nickname: "同事小李",
+      content: "领导，报给写好了，请过目",
+      time: "14:12"
+    },
+    { headSrc: $r("app.media.ic_user_head5"),
+      nickname: "HR小孙",
+      content: "这个岗位还需要招两个人",
+      time: "12:08"
+    },
+    { headSrc: $r("app.media.ic_user_head6"),
+      nickname: "客户小潘",
+      content: "这是我们公司的报价，希望您能考虑下",
+      time: "昨天" },
+    { headSrc: $r("app.media.ic_user_head7"),
+      nickname: "老弟",
+      content: "好的，哥",
+      time: "周一" }
+  ]
   @State isLoading: boolean = true
 
   aboutToAppear() {
@@ -39,7 +70,7 @@ export default struct Home {
         const friends = result.friends
 
         if (friends && friends.length > 0) {
-          this.chatList = friends.map((friend, index) => {
+          const fetchedChats: ChatItemData[] = friends.map((friend, index) => {
             const chatItem: ChatItemData = {
               headSrc: AVATAR_LIST[index % AVATAR_LIST.length],
               nickname: friend.name || '未知好友',
@@ -47,10 +78,10 @@ export default struct Home {
             }
             return chatItem
           })
-          console.info(`[Home] 成功加载 ${this.chatList.length} 个好友`)
+          this.chatList = [...this.chatList, ...fetchedChats]
+          console.info(`[Home] 成功加载 ${fetchedChats.length} 个好友`)
         } else {
           console.info(`[Home] 好友列表为空`)
-          this.chatList = []
         }
       } else {
         console.error(`[Home] 获取好友列表失败: ${result.message}`)

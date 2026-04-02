@@ -9,6 +9,8 @@
     "pages/chat/ForwardPage",
     "pages/qrcode/MyQrCodePage",
     "pages/HardwareIndexPage",
-    "pages/favorite/Favorite"
+    "pages/favorite/Favorite",
+    "pages/contact/ContactSearchPage",
+    "pages/contact/AddFriendPage"
   ]
 }

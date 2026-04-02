@@ -327,7 +327,6 @@ export default struct ChatPage {
       console.error(`[ChatPage] 加载消息异常: ${JSON.stringify(err)}`)
     }
   }
-
   onBackPress() {
     return this.keyboardHeight > 0
   }
@@ -388,7 +387,6 @@ export default struct ChatPage {
     this.showMessageMenu = false
     this.selectedMessageIndex = -1
   }
-
   // 开始录音
   onStartRecord = () => {
     // 文件名  唯一
@@ -518,7 +516,7 @@ export default struct ChatPage {
             .padding({ left: 8, right: 8 })
             .fontSize(20)
             .fontColor(Color.Black)
-            .borderRadius(8)
+            .borderRadius(8)// 设置stateStyles，解决点击编辑框会变色的问题
             .stateStyles({
               normal: {.backgroundColor(Color.White)
               },
@@ -585,7 +583,6 @@ export default struct ChatPage {
               this.showPasteButton = false
             })
         }
-
 
         Image($r("app.media.ic_emoji_pack"))
           .width(33)

@@ -6,6 +6,8 @@ import WindowManager from '../utils/WindowManager'
 @Component
 export default struct WechatToolbar {
   private title: string = "发现"
+  private onSearchClick?: () => void
+  private onAddClick?: () => void
 
   build() {
     Column() {
@@ -21,15 +23,23 @@ export default struct WechatToolbar {
             .height(22)
             .margin({ right: 20 })
             .onClick(() => {
-              router.pushUrl({ url: 'pages/search/SearchPage' })
+              if (this.onSearchClick) {
+                this.onSearchClick()
+              } else {
+                router.pushUrl({ url: 'pages/search/SearchPage' })
+              }
             })
           Image($r('app.media.ic_add'))
             .width(25)
             .height(25)
             .margin({ right: 18 })
             .onClick(() => {
-              prompt.showToast({ message: "功能正在开发中...", duration: 2000 })
-              router.pushUrl({ url: 'pages/HardwareIndexPage' })
+              if (this.onAddClick) {
+                this.onAddClick()
+              } else {
+                prompt.showToast({ message: "功能正在开发中...", duration: 2000 })
+                router.pushUrl({ url: 'pages/HardwareIndexPage' })
+              }
             })
         }
         .height("100%")
