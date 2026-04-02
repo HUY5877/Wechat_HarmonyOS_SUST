@@ -6,12 +6,11 @@
     "pages/search/SearchPage",
     "pages/chat/ChatPage",
     "pages/qrcode/MyQrCodePage",
-    "pages/HardwareIndexPage",
     "pages/favorite/Favorite",
     "pages/contact/Contact",
     "pages/contact/ContactSearchPage",
     "pages/contact/AddFriendPage",
-    "pages/favorite/FavoriteDetail"
+    "pages/favorite/FavoriteDetail",
     "pages/HardwareIndexPage",
     "pages/game2048/Game2048",
     "pages/mine/SettingPage",
