@@ -16,6 +16,11 @@
     "pages/game2048/Game2048",
     "pages/mine/SettingPage",
     "pages/mine/AccountSecurityPage",
-    "pages/discovery/GamePage"
+    "pages/discovery/GamePage",
+    "pages/mine/ServicePage",
+    "pages/mine/WalletPage",
+    "pages/mine/BalancePage",
+    "pages/mine/LingqiantongPage",
+    "pages/mine/BankCardPage"
   ]
 }

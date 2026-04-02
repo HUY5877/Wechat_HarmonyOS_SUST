@@ -111,7 +111,11 @@ export default struct Mine {
 
       Divider().color("#f3f3f3").strokeWidth(10)
 
-      ListMenuItem({ title: "服务", iconSrc: $r('app.media.ic_service'), clickHandler: () => { Toast.show("二级页面正在开发中...") } })
+      ListMenuItem({ 
+        title: "服务", 
+        iconSrc: $r('app.media.ic_service'), 
+        clickHandler: () => { router.pushUrl({ url: 'pages/mine/ServicePage' }) } 
+      })
       
       Divider().color("#f3f3f3").strokeWidth(10)
 
