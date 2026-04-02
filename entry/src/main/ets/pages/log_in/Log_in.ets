@@ -1,7 +1,7 @@
 import router from '@ohos.router'
 import { Toast } from '../../utils/Toast'
-import WindowManager from '../../utils/WindowManager'
 import { login } from '../../utils/LoginApi'
+import WindowManager from '../../utils/WindowManager'
 
 @Entry
 @Component
