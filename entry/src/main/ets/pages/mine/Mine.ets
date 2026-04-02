@@ -5,7 +5,6 @@ import WindowManager from '../../utils/WindowManager'
 import { Toast } from '../../utils/Toast'
 import { getUserInfo, logout } from '../../utils/LoginApi'
 import promptAction from '@ohos.promptAction'
-import { getUserInfo, UserInfo } from '../../utils/LoginApi'
 
 @Preview
 @Component
@@ -59,19 +58,16 @@ export default struct Mine {
   private async fetchUserInfo() {
     try {
       console.info(`[Mine] 准备获取用户信息，userId: ${this.userId}`)
-      const res = await getUserInfo(this.userId)
+      const res = await getUserInfo(this.userId) // UserInfo | null
       console.info(`[Mine] 获取用户信息结果: ${JSON.stringify(res)}`)
-      if (res.success && res.data) {
-        this.userName = res.data.name || '无名氏'
-        this.userAccount = res.data.account || '未知账号'
-        this.userStatus = res.data.status || ''
+      if (res) {
+        this.userName = res.name || '无名氏'
+        this.userAccount = res.account || '未知账号'
+        this.userStatus = res.status || ''
 
         // 获取后端的头像ID
-        const avatarId = String(res.data.profile_picture_id)
-        console.info(`[Mine] 尝试加载头像ID: ${avatarId}`)
-        
-        // 分支逻辑负载头像
         const avatarId = String(res.profile_picture_id)
+        console.info(`[Mine] 尝试加载头像ID: ${avatarId}`)
         if (avatarId === '0') {
           this.imgPath = $r('app.media.avatar_0')
         } else if (avatarId === '1') {
@@ -147,7 +143,6 @@ export default struct Mine {
       .width("100%")
       .padding({ top: WindowManager.statusBarHeight + 40, bottom: 40 })
       .backgroundColor(Color.White)
-      .padding({ top: WindowManager.statusBarHeight })
       .onClick(() => {
         router.pushUrl({ url: 'pages/mine/PersonalInfoPage' })
       })
@@ -196,7 +191,7 @@ export default struct Mine {
       ListMenuItem({
         title: "卡包",
         iconSrc: $r('app.media.ic_card_pkg')
-      }).onClick(unDevTip)
+      }).onClick(() => { Toast.show('二级页面正在开发中...') })
       Divider()
         .vertical(false)
         .color("#f3f3f3")
@@ -205,7 +200,7 @@ export default struct Mine {
       ListMenuItem({
         title: "表情",
         iconSrc: $r('app.media.ic_face_icon')
-      }).onClick(unDevTip)
+      }).onClick(() => { Toast.show('二级页面正在开发中...') })
       Divider()
         .vertical(false)
         .color("#f3f3f3")
@@ -215,7 +210,7 @@ export default struct Mine {
         title: "设置",
         iconSrc: $r('app.media.ic_setting')
       })
-        .onClick(unDevTip)
+        .onClick(() => { Toast.show('二级页面正在开发中...') })
 
       // 退出登录按钮
       if (this.userId !== '未登录') {

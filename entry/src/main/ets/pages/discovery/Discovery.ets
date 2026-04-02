@@ -1,7 +1,6 @@
 import router from '@ohos.router'
 import ListMenuItem from '../../component/ListMenuItem'
 import WechatToolbar from '../../component/WechatToolbar'
-import router from '@ohos.router'
 import { BusinessError } from '@kit.BasicServicesKit'
 
 @Preview
