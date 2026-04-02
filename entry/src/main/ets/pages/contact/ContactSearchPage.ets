@@ -1,124 +1,70 @@
-import prompt from '@ohos.promptAction';
 import router from '@ohos.router';
-import window from '@ohos.window';
 import WindowManager from '../../utils/WindowManager';
-import ContactApi, { FriendInfo } from '../../utils/ContactApi';
-import { ContactItem } from '../contact/DataItem';
+import ContactApi, { FriendDetail } from '../../utils/ContactApi';
+import { getAvatarResource } from '../../utils/AvatarUtils';
 
 interface SearchResult {
   friend_id: string;
-  friend_name: string;
+  name: string;
+  profile_picture_id: string;
 }
 
 @Entry
 @Component
 export default struct ContactSearchPage {
-  private controller: TextInputController = new TextInputController()
-  private keyboardHeight: number = 0
   @State private searchText: string = ''
-  @State private searchResults: ContactItem[] = []
+  @State private searchResults: SearchResult[] = []
   @State private isSearching: boolean = false
-  private currentUserId: string = "1"
-
-  private headImages: Resource[] = [
-    $r("app.media.ic_user_head1"),
-    $r("app.media.ic_user_head2"),
-    $r("app.media.ic_user_head3"),
-    $r("app.media.ic_user_head4"),
-    $r("app.media.ic_user_head5"),
-    $r("app.media.ic_user_head6"),
-    $r("app.media.ic_user_head7")
-  ]
-
-  async aboutToAppear() {
-    await window.getLastWindow(getContext(this)).then(currentWindow => {
-      currentWindow.on('keyboardHeightChange', (height) => {
-        this.keyboardHeight = height;
-      })
-    })
-  }
-
-  onBackPress() {
-    return this.keyboardHeight > 0
-  }
-
-  aboutToDisappear() {
-    this.searchText = ''
-    this.searchResults = []
-  }
+  @StorageProp('userId') userId: string = '未登录'
 
   build() {
     Column() {
+      // 顶部导航栏
       Row() {
-        Stack() {
-          TextInput({ text: this.searchText, placeholder: '搜索', controller: this.controller })
-            .placeholderFont({ size: 20, weight: 400 })
-            .caretColor(Color.Green)
-            .placeholderColor(Color.Grey)
-            .width('100%')
-            .height("100%")
-            .padding({ left: 40, right: 60 })
-            .fontSize(20)
-            .fontColor(Color.Black)
-            .borderRadius(8)
-            .stateStyles({
-              normal: {.backgroundColor(Color.White)
-              },
-              pressed: {.backgroundColor(Color.White)
-              },
-              clicked: {.backgroundColor(Color.White)
-              },
-              focused: {.backgroundColor(Color.White)
-              }
-            })
-            .onChange((value: string) => {
-              this.searchText = value
-              this.doSearch(value)
-            })
-            .onSubmit(() => {
-              this.doSearch(this.searchText)
-            })
-
-          Row() {
-            Image($r("app.media.ic_search"))
-              .colorBlend(Color.Grey)
-              .width(20)
-              .height(20)
-            if (this.searchText.length != 0) {
-              Image($r('app.media.ic_delete'))
-                .width(20)
-                .height(20)
-                .colorBlend(Color.Gray)
-                .onClick(() => {
-                  this.searchText = ""
-                  this.searchResults = []
-                })
-            }
-          }
-          .width("100%")
-          .padding({ left: 10, right: 10 })
-          .hitTestBehavior(HitTestMode.None)
-          .justifyContent(FlexAlign.SpaceBetween)
-        }
-        .margin({ left: 20 })
-        .layoutWeight(1)
-
-        Text("取消")
-          .fontColor("#5f6c8a")
-          .width(70)
-          .height("100%")
-          .fontWeight(400)
-          .textAlign(TextAlign.Center)
-          .fontSize(19)
+        Image($r("app.media.ic_back_black"))
+          .width(22)
+          .height(22)
+          .margin({ left: 16 })
           .onClick(() => {
             router.back()
           })
+        Text("搜索")
+          .fontSize(18)
+          .fontColor(Color.Black)
       }
       .width("100%")
-      .height(40)
-      .justifyContent(FlexAlign.SpaceBetween)
-      .margin({ top: 10 })
+      .height(53)
+      .alignItems(VerticalAlign.Center)
 
+      // 搜索输入区域
+      Row() {
+        Column() {
+          TextInput({ placeholder: "搜索", text: this.searchText })
+            .width("100%")
+            .height(40)
+            .fontSize(17)
+            .backgroundColor("#f0f0f0")
+            .padding({ left: 16, right: 16 })
+            .borderRadius(20)
+            .onChange((value: string) => {
+              this.searchText = value
+            })
+        }
+        .width("80%")
+        .margin({ left: 16 })
+        Text("搜索")
+          .fontSize(16)
+          .fontColor("#57be6a")
+          .margin({ right: 16 })
+          .onClick(() => {
+            this.searchContacts()
+          })
+      }
+      .width("100%")
+      .height(60)
+      .alignItems(VerticalAlign.Center)
+
+      // 搜索结果区域
       if (this.isSearching) {
         Column() {
           Text("搜索中...")
@@ -126,76 +72,58 @@ export default struct ContactSearchPage {
             .fontColor(Color.Gray)
         }
         .width("100%")
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-      } else if (this.searchText.length === 0) {
+        .padding({ top: 20 })
+      } else if (this.searchText.length > 0 && this.searchResults.length > 0) {
         Column() {
-          Text("搜索通讯录")
-            .fontColor(Color.Gray)
-            .fontSize(15)
-        }
-        .width("100%")
-        .alignItems(HorizontalAlign.Start)
-        .margin({ left: 25, top: 20 })
-      } else if (this.searchResults.length === 0) {
-        Column() {
-          Text("无搜索结果")
-            .fontColor(Color.Gray)
-            .fontSize(15)
-        }
-        .width("100%")
-        .alignItems(HorizontalAlign.Center)
-        .margin({ top: 100 })
-      } else {
-        List() {
-          ForEach(this.searchResults, (item: ContactItem, index: number) => {
-            ListItem() {
-              Row() {
-                Image(item.head)
-                  .width(48)
-                  .height(48)
-                  .borderRadius(4)
-                  .margin({ right: 12 })
-                Column() {
-                  Text(item.name)
-                    .fontSize(17)
-                    .fontColor(Color.Black)
-                  Text(`账号: ${item.friend_id}`)
-                    .fontSize(14)
-                    .fontColor(Color.Gray)
-                    .margin({ top: 4 })
-                }
-                .alignItems(HorizontalAlign.Start)
-              }
-              .width("100%")
-              .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+          ForEach(this.searchResults, (item: SearchResult) => {
+            Row() {
+              Image(getAvatarResource(item.profile_picture_id))
+                .width(40)
+                .height(40)
+                .borderRadius(4)
+                .margin({ right: 12 })
+              Text(item.name)
+                .fontSize(17)
+                .fontColor(Color.Black)
+              Blank()
             }
+            .width("100%")
+            .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+            .backgroundColor(Color.White)
             .onClick(() => {
               router.pushUrl({
                 url: 'pages/chat/ChatPage',
-                params: { 
-                  name: item.name,
-                  friend_id: item.friend_id
-                }
+                params: { name: item.name }
               })
             })
           })
         }
         .width("100%")
-        .layoutWeight(1)
-        .backgroundColor(Color.White)
+        .backgroundColor("#f0f0f0")
+      } else if (this.searchText.length > 0) {
+        Column() {
+          Text("未找到联系人")
+            .fontSize(16)
+            .fontColor(Color.Gray)
+        }
+        .width("100%")
+        .padding({ top: 20 })
       }
 
     }
     .width("100%")
     .height("100%")
-    .alignItems(HorizontalAlign.Start)
-    .backgroundColor("#f3f3f3")
-    .padding({ top: WindowManager.statusBarHeight, bottom: WindowManager.navBarHeight })
+    .backgroundColor("#f0f0f0")
+    .padding({ top: WindowManager.statusBarHeight })
   }
 
-  async doSearch(keyword: string) {
-    if (keyword.trim() === '') {
+  async searchContacts() {
+    if (this.userId === '未登录') {
+      console.log('请先登录')
+      return
+    }
+
+    if (this.searchText.trim() === '') {
       this.searchResults = []
       return
     }
@@ -203,17 +131,24 @@ export default struct ContactSearchPage {
     this.isSearching = true
 
     try {
-      const results = await ContactApi.searchContacts(this.currentUserId, keyword)
-      this.searchResults = results.map((item: FriendInfo, index: number): ContactItem => {
-        return {
-          name: item.name || item.friend_id || '未知用户',
-          head: this.headImages[index % this.headImages.length],
-          friend_id: item.friend_id
-        } as ContactItem
-      })
+      const result = await ContactApi.searchContacts(this.userId, this.searchText)
+      
+      // 获取每个好友的详细信息，包括头像ID
+      const searchResultsWithDetails: SearchResult[] = []
+      for (const contact of result) {
+        const detail = await ContactApi.getFriendDetail(contact.friend_id)
+        if (detail) {
+          searchResultsWithDetails.push({
+            friend_id: detail.friend_id,
+            name: detail.name,
+            profile_picture_id: detail.profile_picture_id || '0'
+          })
+        }
+      }
+      
+      this.searchResults = searchResultsWithDetails
     } catch (error) {
-      prompt.showToast({ message: '搜索失败' })
-      this.searchResults = []
+      console.log('搜索失败')
     }
 
     this.isSearching = false

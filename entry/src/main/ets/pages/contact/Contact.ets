@@ -3,80 +3,80 @@ import router from '@ohos.router'
 import ListContactItem from '../../component/ListContactItem'
 import WechatToolbar from '../../component/WechatToolbar'
 import ContactApi, { FriendDetail } from '../../utils/ContactApi'
+import { getAvatarResource } from '../../utils/AvatarUtils'
 import DataItem, { ContactItem } from './DataItem'
 
+@Entry
 @Preview
 @Component
 export default struct Contact {
   private scroller: Scroller = new Scroller()
-  @StorageProp('userId') currentUserId: string = ''
-  @State private dataList: DataItem[] = [
-    {
-      title: '',
-      contactList: [
-        { name: "新的朋友", head: $r("app.media.ic_new_friend") } as ContactItem,
-        { name: "群聊", head: $r("app.media.ic_group_chat") } as ContactItem,
-        { name: "标签", head: $r("app.media.ic_tag") } as ContactItem,
-        { name: "公众号", head: $r("app.media.ic_official_account") } as ContactItem
-      ]
-    } as DataItem
-  ]
+  @StorageProp('userId') userId: string = '未登录'
+  
+  @State private dataList: DataItem[] = []
   @State private isLoading: boolean = true
   @State private errorMessage: string = ''
+
   private letterList: string[] =
     ['↑', '☆', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
       'V', 'W', 'X', 'Y', 'Z', '#']
 
   async aboutToAppear() {
-    if (!this.currentUserId) {
-      this.currentUserId = "1" // Fallback if no user is specified
-    }
+    await this.loadContacts()
+  }
+
+  async onPageShow() {
     await this.loadContacts()
   }
 
   async loadContacts() {
+    if (this.userId === '未登录') {
+      this.errorMessage = '请先登录'
+      this.isLoading = false
+      return
+    }
+
     this.isLoading = true
     this.errorMessage = ''
     try {
-      console.log('开始加载通讯录 (query_contacts)，用户ID:', this.currentUserId);
+      console.log('开始加载通讯录，用户ID:', this.userId);
       
-      const friends = await ContactApi.getContacts(this.currentUserId)
-      console.log('获取通讯录成功，好友数量:', friends.length)
+      // 1. 获取通讯录列表（返回 friend_id 列表）
+      const contacts = await ContactApi.getContacts(this.userId)
+      console.log('获取通讯录成功，好友数量:', contacts.length)
+      console.log('通讯录原始数据:', JSON.stringify(contacts))
       
-      if (friends.length === 0) {
+      if (contacts.length === 0) {
         this.errorMessage = '暂无好友，请先添加好友'
         this.isLoading = false
         return
       }
       
-      // Map FriendInfo to ContactItem (which includes head)
-      const headImages: Resource[] = [
-        $r("app.media.ic_user_head1"),
-        $r("app.media.ic_user_head2"),
-        $r("app.media.ic_user_head3"),
-        $r("app.media.ic_user_head4"),
-        $r("app.media.ic_user_head5"),
-        $r("app.media.ic_user_head6"),
-        $r("app.media.ic_user_head7")
-      ]
-      const friendItems: ContactItem[] = friends.map((f, index): ContactItem => {
-        const item: ContactItem = {
-          name: f.name || '未知用户',
-          head: headImages[index % headImages.length],
-          friend_id: f.friend_id
+      // 2. 根据每个 friend_id 查询好友详细信息
+      const friendDetails: FriendDetail[] = []
+      for (const contact of contacts) {
+        console.log('查询好友详情，friend_id:', contact.friend_id);
+        const detail = await ContactApi.getFriendDetail(contact.friend_id)
+        if (detail) {
+          friendDetails.push(detail)
+          console.log('好友详情:', JSON.stringify(detail));
+        } else {
+          console.log('未获取到好友详情，friend_id:', contact.friend_id);
         }
-        return item
-      })
+      }
+      
+      console.log('获取到好友详情数量:', friendDetails.length);
+      
+      if (friendDetails.length === 0) {
+        this.errorMessage = '无法获取好友信息'
+        this.isLoading = false
+        return
+      }
       
       // 3. 按字母分组显示
-      const groupedData = this.groupContactsByLetter(friendItems)
-      const topItems = this.dataList.find(item => item.title === '')
-      if (topItems) {
-        this.dataList = [topItems, ...groupedData]
-      } else {
-        this.dataList = groupedData
-      }
-      console.log('分组后的数据:', JSON.stringify(this.dataList));
+      const groupedData = this.groupContactsByLetter(friendDetails)
+      this.dataList = groupedData
+      console.log('分组后的数据:', JSON.stringify(groupedData));
       
     } catch (error) {
       console.error('加载通讯录失败:', JSON.stringify(error))
@@ -85,17 +85,21 @@ export default struct Contact {
     this.isLoading = false
   }
 
-  groupContactsByLetter(friends: ContactItem[]): DataItem[] {
+  groupContactsByLetter(friends: FriendDetail[]): DataItem[] {
     const grouped: Record<string, ContactItem[]> = {}
     
-    friends.forEach((friend: ContactItem) => {
-      const friendName = friend.name
+    friends.forEach((friend: FriendDetail) => {
+      // 使用好友的 name，如果没有则使用 account
+      const friendName = friend.name || friend.account || '未知用户'
       const firstLetter = this.getFirstLetter(friendName)
       
       if (!grouped[firstLetter]) {
         grouped[firstLetter] = []
       }
-      grouped[firstLetter].push(friend)
+      grouped[firstLetter].push({
+        name: friendName,
+        head: getAvatarResource(friend.profile_picture_id || '0')
+      })
     })
 
     const result: DataItem[] = []
@@ -103,7 +107,7 @@ export default struct Contact {
       result.push({
         title: letter,
         contactList: grouped[letter]
-      } as DataItem)
+      })
     })
 
     return result
@@ -121,6 +125,7 @@ export default struct Contact {
     // 对于中文字符，简单处理返回首字符
     return firstChar
   }
+
   @Builder
   itemHead(title: string) {
     Text(title)
@@ -169,41 +174,12 @@ export default struct Contact {
           .width("100%")
           .layoutWeight(1)
           .justifyContent(FlexAlign.Center)
-        } else if (this.dataList.length === 1 && this.dataList[0].title === '') {
-          // If only top options are loaded but no contacts
-          List({ scroller: this.scroller }) {
-            ForEach(this.dataList, (item: DataItem) => {
-              ListItemGroup({ header: this.itemHead(item.title) }) {
-                ForEach(item.contactList, (contact: ContactItem) => {
-                  ListItem() {
-                    ListContactItem({ head: contact.head, name: contact.name })
-                  }
-                  .onClick(() => {
-                    router.pushUrl({
-                      url: 'pages/chat/ChatPage',
-                      params: { name: contact.name, friend_id: contact.friend_id }
-                    })
-                  })
-                })
-              }
-              .divider({
-                strokeWidth: 0.8,
-                color: '#f0f0f0',
-                startMargin: 85,
-                endMargin: 0
-              })
-            })
-          }
-          .width('100%')
-          .height(0)
-          .layoutWeight(1)
-          .backgroundColor(Color.White)
-          
+        } else if (this.dataList.length === 0) {
           Column() {
             Text("暂无好友")
               .fontSize(16)
               .fontColor(Color.Gray)
-              .margin({ bottom: 20, top: 40 })
+              .margin({ bottom: 20 })
             Button('添加好友')
               .onClick(() => {
                 router.pushUrl({ url: 'pages/contact/AddFriendPage' })
@@ -223,7 +199,7 @@ export default struct Contact {
                   .onClick(() => {
                     router.pushUrl({
                       url: 'pages/chat/ChatPage',
-                      params: { name: contact.name, friend_id: contact.friend_id }
+                      params: { name: contact.name }
                     })
                   })
                 })
@@ -264,7 +240,6 @@ export default struct Contact {
           for (const item of this.dataList) {
             if (letter === item.title) {
               this.scroller.scrollToIndex(target)
-              console.log('滚动到索引:', target)
               prompt.showToast({ message: "" + target })
               break
             }
