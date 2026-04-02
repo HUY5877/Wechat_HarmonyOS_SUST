@@ -11,6 +11,7 @@
     "pages/contact/ContactSearchPage",
     "pages/contact/AddFriendPage",
     "pages/favorite/FavoriteDetail",
+    "pages/mine/ServicePage",
     "pages/HardwareIndexPage",
     "pages/game2048/Game2048",
     "pages/mine/SettingPage",
