@@ -1,20 +1,23 @@
 @Preview
 @Component
 export default struct ListMenuItem {
-  private iconSrc: Resource = $r('app.media.icon')
-  private title: string = "朋友圈"
-  private news: string = ""
-  private newsIconSrc?: Resource
+  iconSrc?: Resource
+  title: string = "朋友圈"
+  news: string = ""
+  newsIconSrc?: Resource
+  clickHandler?: () => void
 
   build() {
     Row() {
-      Image(this.iconSrc)
-        .width(25)
-        .height(25)
-        .margin({ right: 18 })
+      if (this.iconSrc) {
+        Image(this.iconSrc)
+          .width(25)
+          .height(25)
+          .margin({ right: 18 })
+      }
       Text(this.title)
         .fontColor(Color.Black)
-        .fontSize(19)
+        .fontSize(16)
         .margin({ right: 10 })
       Blank()
       Text(this.news)
@@ -33,6 +36,11 @@ export default struct ListMenuItem {
     .width("100%")
     .height(60)
     .backgroundColor("#fff")
-    .padding({ left: 15, right: 15 })
+    .padding({ left: this.iconSrc ? 15 : 15, right: 15 })
+    .onClick(() => {
+      if (this.clickHandler) {
+        this.clickHandler()
+      }
+    })
   }
 }
