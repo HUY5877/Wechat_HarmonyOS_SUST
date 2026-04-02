@@ -121,12 +121,36 @@ export default class ContactApi {
   }
 
   static async searchContacts(userId: string, friendName: string): Promise<FriendInfo[]> {
-    const data: RequestData = {
-      user_id: userId,
-      friend_name: friendName
-    };
-    const result = await ContactApi.request('query_contacts_', 'contacts', data) as ContactApiResult;
-    return result.user_id || [];
+    try {
+      const data: RequestData = {
+        user_id: userId,
+        friend_name: friendName
+      };
+      const result = await ContactApi.request('query_contacts_', 'contacts', data) as ContactApiResult;
+      
+      // 如果API返回了结果，直接返回
+      if (result && result.user_id && result.user_id.length > 0) {
+        console.log('API搜索结果:', JSON.stringify(result.user_id));
+        return result.user_id;
+      }
+      
+      // 如果API没有返回结果，使用本地搜索作为备份
+      console.log('API没有返回结果，使用本地搜索');
+      const allContacts = await ContactApi.getContacts(userId);
+      const filteredContacts = allContacts.filter(contact => 
+        contact.name.toLowerCase().includes(friendName.toLowerCase())
+      );
+      console.log('本地搜索结果:', JSON.stringify(filteredContacts));
+      return filteredContacts;
+    } catch (error) {
+      console.error('搜索失败:', error);
+      // 搜索失败时，使用本地搜索作为备份
+      const allContacts = await ContactApi.getContacts(userId);
+      const filteredContacts = allContacts.filter(contact => 
+        contact.name.toLowerCase().includes(friendName.toLowerCase())
+      );
+      return filteredContacts;
+    }
   }
 
   static async addFriend(userId: string, account: string): Promise<AddFriendResult> {

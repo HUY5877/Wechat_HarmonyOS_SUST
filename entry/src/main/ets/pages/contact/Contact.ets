@@ -3,8 +3,10 @@ import router from '@ohos.router'
 import ListContactItem from '../../component/ListContactItem'
 import WechatToolbar from '../../component/WechatToolbar'
 import ContactApi, { FriendDetail } from '../../utils/ContactApi'
+import { getAvatarResource } from '../../utils/AvatarUtils'
 import DataItem, { ContactItem } from './DataItem'
 
+@Entry
 @Preview
 @Component
 export default struct Contact {
@@ -20,6 +22,10 @@ export default struct Contact {
       'V', 'W', 'X', 'Y', 'Z', '#']
 
   async aboutToAppear() {
+    await this.loadContacts()
+  }
+
+  async onPageShow() {
     await this.loadContacts()
   }
 
@@ -81,18 +87,8 @@ export default struct Contact {
 
   groupContactsByLetter(friends: FriendDetail[]): DataItem[] {
     const grouped: Record<string, ContactItem[]> = {}
-
-    const headImages = [
-      $r("app.media.ic_user_head1"),
-      $r("app.media.ic_user_head2"),
-      $r("app.media.ic_user_head3"),
-      $r("app.media.ic_user_head4"),
-      $r("app.media.ic_user_head5"),
-      $r("app.media.ic_user_head6"),
-      $r("app.media.ic_user_head7")
-    ]
     
-    friends.forEach((friend: FriendDetail, index: number) => {
+    friends.forEach((friend: FriendDetail) => {
       // 使用好友的 name，如果没有则使用 account
       const friendName = friend.name || friend.account || '未知用户'
       const firstLetter = this.getFirstLetter(friendName)
@@ -102,7 +98,7 @@ export default struct Contact {
       }
       grouped[firstLetter].push({
         name: friendName,
-        head: headImages[index % headImages.length]
+        head: getAvatarResource(friend.profile_picture_id || '0')
       })
     })
 

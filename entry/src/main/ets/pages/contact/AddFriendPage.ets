@@ -1,6 +1,8 @@
 import router from '@ohos.router';
+import prompt from '@ohos.promptAction';
 import WindowManager from '../../utils/WindowManager';
 import ContactApi from '../../utils/ContactApi';
+import { getAvatarResource } from '../../utils/AvatarUtils';
 
 interface SearchResult {
   friend_id: string;
@@ -39,11 +41,11 @@ export default struct AddFriendPage {
       Column() {
         Row() {
           TextInput({ placeholder: "微信号/手机号", text: this.searchText })
-            .width("100%")
+            .width("80%")
             .height(50)
             .fontSize(17)
             .backgroundColor(Color.White)
-            .padding({ left: 16, right: 50 })
+            .padding({ left: 16, right: 16 })
             .borderRadius(0)
             .onChange((value: string) => {
               this.searchText = value
@@ -58,6 +60,8 @@ export default struct AddFriendPage {
             })
         }
         .width("100%")
+        .height(50)
+        .alignItems(VerticalAlign.Center)
         .backgroundColor(Color.White)
 
         if (this.isSearching) {
@@ -72,7 +76,7 @@ export default struct AddFriendPage {
           Column() {
             ForEach(this.searchResults, (item: SearchResult) => {
               Row() {
-                Image($r("app.media.ic_user_head2"))
+                Image(getAvatarResource(item.profile_picture_id || '0'))
                   .width(40)
                   .height(40)
                   .borderRadius(4)
@@ -87,15 +91,22 @@ export default struct AddFriendPage {
                 }
                 .alignItems(HorizontalAlign.Start)
                 Blank()
-                Text("添加到通讯录")
-                  .fontSize(14)
-                  .fontColor("#57be6a")
-                  .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                  .borderRadius(4)
-                  .border({ width: 1, color: "#57be6a" })
-                  .onClick(() => {
-                    this.addFriend(item.account)
-                  })
+                Column() {
+                  Text("添加到通讯录")
+                    .fontSize(14)
+                    .fontColor("#57be6a")
+                    .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                    .borderRadius(4)
+                    .border({ width: 1, color: "#57be6a" })
+                }
+                .width(100)
+                .height(30)
+                .justifyContent(FlexAlign.Center)
+                .alignItems(HorizontalAlign.Center)
+                .onClick(() => {
+                  console.log('点击了添加到通讯录按钮，account:', item.account)
+                  this.addFriend(item.account)
+                })
               }
               .width("100%")
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
@@ -158,22 +169,49 @@ export default struct AddFriendPage {
   }
 
   async addFriend(account: string) {
+    console.log('开始执行addFriend方法，account:', account, 'userId:', this.userId)
+    
     if (this.userId === '未登录') {
       console.log('请先登录')
       return
     }
 
     try {
+      console.log('调用ContactApi.addFriend，userId:', this.userId, 'account:', account)
       const result = await ContactApi.addFriend(this.userId, account)
+      console.log('ContactApi.addFriend返回结果:', JSON.stringify(result))
+      
       if (result.result === 'success') {
         console.log('已发送好友请求')
+        // 显示添加成功的弹窗
+        prompt.showToast({
+          message: '已发送好友请求',
+          duration: 2000
+        })
+        
         this.searchText = ''
         this.searchResults = []
+        
+        // 延迟返回，让用户看到弹窗
+        setTimeout(() => {
+          console.log('准备返回上一页')
+          router.back()
+        }, 1500)
       } else {
-        console.log(result.text || '添加失败')
+        console.log('添加失败，原因:', result.text || '未知错误')
+        // 显示添加失败的弹窗
+        prompt.showToast({
+          message: result.text || '添加失败',
+          duration: 2000
+        })
       }
     } catch (error) {
-      console.log('添加失败')
+      console.error('添加失败，错误:', error)
+      // 显示添加失败的弹窗
+      prompt.showToast({
+        message: '添加失败',
+        duration: 2000
+      })
     }
   }
 }
