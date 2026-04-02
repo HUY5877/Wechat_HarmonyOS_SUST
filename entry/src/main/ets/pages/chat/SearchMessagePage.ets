@@ -50,9 +50,8 @@ export default struct SearchMessagePage {
       const result = await searchMessage(this.userId, this.chatFriendId, this.searchText.trim())
       console.info(`[SearchMessagePage] 搜索结果: success=${result.success}, messages.length=${result.messages.length}`)
       if (result.success) {
-        const filteredMessages = result.messages.filter((msg: SearchMessageItem) => msg.friend_id === this.chatFriendId)
-        console.info(`[SearchMessagePage] 过滤后消息数: ${filteredMessages.length}`)
-        this.searchResults = filteredMessages
+        console.info(`[SearchMessagePage] 搜索成功，共找到 ${result.messages.length} 条消息`)
+        this.searchResults = result.messages
         if (this.searchResults.length === 0) {
           Toast.show('未找到相关消息')
         }
@@ -170,8 +169,11 @@ export default struct SearchMessagePage {
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .width('100%')
                   .padding(10)
-                  .backgroundColor(Color.White)
                   .borderRadius(4)
+                Text(`来自: ${item.friend_id}`)
+                  .fontSize(12)
+                  .fontColor(Color.Gray)
+                  .margin({ top: 4 })
               }
               .margin({ left: 15, right: 15, top: 8 })
             }
@@ -179,8 +181,8 @@ export default struct SearchMessagePage {
               router.pushUrl({
                 url: 'pages/chat/ChatPage',
                 params: {
-                  name: this.chatName,
-                  friend_id: this.chatFriendId,
+                  name: this.chatName || '聊天记录',
+                  friend_id: item.friend_id,
                   messageId: item.message_id
                 }
               })

@@ -1,84 +1,134 @@
 import http from '@ohos.net.http';
 
-// 定义接口
-interface RequestParams {
-  operation: string;
-  table_name: string;
-  data: object;
+/**
+ * Common request data interfaces to satisfy ArkTS strict typing
+ */
+export interface UserIdParams {
+  user_id: string;
 }
 
-interface UserInfo {
+export interface FriendIdParams {
+  user_id: string;
+  friend_id: string;
+}
+
+export interface AccountParams {
   user_id: string;
   account: string;
-  name: string;
-  status: string;
-  profile_picture_id: string;
 }
 
-interface UserIdData {
+export interface MsgSearchParams {
   user_id: string;
+  content: string;
 }
 
-interface UserIdRequest {
+export interface FavoriteSearchParams {
   user_id: string;
+  content: string;
 }
 
-class ApiService {
+export interface DeleteMsgParams {
+  user_id: string;
+  message_id: string;
+}
+
+export interface AddMsgParams {
+  user_id: string;
+  friend_id: string;
+  content: string;
+}
+
+export interface ContactSearchParams {
+  user_id: string;
+  friend_name: string;
+}
+
+/**
+ * Unified request payload structure
+ */
+export interface RequestParams {
+  operation: string;
+  table_name: string;
+  data: object; // Use object instead of Record for broader compatibility with specific interfaces
+}
+
+/**
+ * Standard Success/Fail response result
+ */
+export interface BaseResponse {
+  result: 'success' | 'fail';
+  user_id?: string;
+  text?: string;
+}
+
+/**
+ * Service for central communication with the backend
+ */
+export class ApiService {
   private static readonly BASE_URL = 'http://146.56.215.115:10001/api/v1/service';
+
   /**
-   * 发送API请求
-   * @param operation 操作类型
-   * @param tableName 表名
-   * @param data 请求数据
-   * @returns Promise<UserInfo> 返回结果
+   * Generic POST requester
    */
-  static async request(operation: string, tableName: string, data: object): Promise<UserInfo> {
+  static async request<T>(operation: string, tableName: string, data: object): Promise<T> {
+    const httpRequest = http.createHttp();
     try {
-      // 创建HTTP请求
-      let httpRequest = http.createHttp();
-      
-      // 构建请求参数
-      const requestParams: RequestParams = {
-        operation,
+      const payload: RequestParams = {
+        operation: operation,
         table_name: tableName,
-        data
+        data: data
       };
 
-      // 发送请求
-      let response = await httpRequest.request(ApiService.BASE_URL, {
+      console.info(`[ApiService] Request: ${JSON.stringify(payload)}`);
+
+      const response = await httpRequest.request(ApiService.BASE_URL, {
         method: http.RequestMethod.POST,
         header: {
           'Content-Type': 'application/json'
         },
-        extraData: JSON.stringify(requestParams)
+        extraData: JSON.stringify(payload),
+        connectTimeout: 15000,
+        readTimeout: 15000
       });
 
-      // 解析响应
       if (response.responseCode === 200) {
-        const result = JSON.parse(response.result as string) as UserInfo;
-        return result;
+        const resultString: string = response.result as string;
+        console.info(`[ApiService] Response: ${resultString}`);
+        return JSON.parse(resultString) as T;
       } else {
-        throw new Error(`HTTP request failed with code ${response.responseCode}`);
+        throw new Error(`HTTP ${response.responseCode}`);
       }
     } catch (error) {
-      console.error('API request error:', error);
-      throw error instanceof Error ? error : new Error('Unknown error occurred');
+      console.error(`[ApiService] Error: ${JSON.stringify(error)}`);
+      throw new Error(`API请求失败: ${error}`);
+    } finally {
+      httpRequest.destroy();
     }
   }
 
   /**
-   * 获取用户个人主页信息
-   * @param userId 用户ID，默认值为1
-   * @returns Promise<UserInfo> 用户信息
+   * Helper to extract the list from a response that is keyed by userId
+   * e.g. {"123": [...]}
    */
-  static async getPersonalHomepage(userId: string = "1"): Promise<UserInfo> {
-    // 使用UserIdData接口定义数据结构
-    const data: UserIdData = { user_id: userId };
-    // 直接传递data对象，因为request方法现在接受any类型的参数
-    return ApiService.request('query_personal_homepage', 'user', data);
+  static extractList<T>(response: object, userId: string): T[] {
+    if (!response || !userId) return [];
+    const resObj = response as Record<string, T[]>;
+    const list = resObj[userId];
+    return Array.isArray(list) ? list : [];
+  }
+
+  /**
+   * Get user personal homepage information
+   */
+  static async getPersonalHomepage(userId: string): Promise<Record<string, string> | null> {
+    try {
+      const data: UserIdParams = { user_id: userId };
+      return await ApiService.request<Record<string, string>>('query_personal_homepage', 'user', data);
+    } catch (err) {
+      console.error(`[ApiService] Error in getPersonalHomepage: ${JSON.stringify(err)}`);
+      return null;
+    }
   }
 }
 
 export default ApiService;
-
-

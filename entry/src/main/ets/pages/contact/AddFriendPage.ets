@@ -1,6 +1,8 @@
+
 import router from '@ohos.router';
 import WindowManager from '../../utils/WindowManager';
 import ContactApi from '../../utils/ContactApi';
+import promptAction from '@ohos.promptAction';
 
 interface SearchResult {
   friend_id: string;
@@ -141,7 +143,7 @@ export default struct AddFriendPage {
           name: this.searchText,
           status: '',
           profile_picture_id: ''
-        }]
+        } as SearchResult]
       } else {
         console.log(result.text || '未找到该用户')
       }
@@ -153,17 +155,45 @@ export default struct AddFriendPage {
   }
 
   async addFriend(account: string) {
-    try {
-      const result = await ContactApi.addFriend(this.currentUserId, account)
-      if (result.result === 'success') {
-        console.log('已发送好友请求')
-        this.searchText = ''
-        this.searchResults = []
-      } else {
-        console.log(result.text || '添加失败')
+    AlertDialog.show({
+      title: '添加朋友',
+      message: `确定要添加 ${account} 为朋友吗？`,
+      autoCancel: true,
+      alignment: DialogAlignment.Bottom,
+      offset: { dx: 0, dy: -20 },
+      gridCount: 3,
+      primaryButton: {
+        value: '取消',
+        action: () => {
+          console.info('取消添加')
+        }
+      },
+      secondaryButton: {
+        value: '确定',
+        fontColor: '#57be6a',
+        action: async () => {
+          try {
+            const result = await ContactApi.addFriend(this.currentUserId, account)
+            if (result.result === 'success') {
+              router.back()
+              promptAction.showToast({
+                message: '已发送好友请求',
+                duration: 2000
+              })
+            } else {
+              promptAction.showToast({
+                message: result.text || '添加失败',
+                duration: 2000
+              })
+            }
+          } catch (error) {
+            promptAction.showToast({
+              message: '网络错误，添加失败',
+              duration: 2000
+            })
+          }
+        }
       }
-    } catch (error) {
-      console.log('添加失败')
-    }
+    })
   }
 }

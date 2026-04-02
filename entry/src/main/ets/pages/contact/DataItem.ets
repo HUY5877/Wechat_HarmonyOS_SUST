@@ -1,6 +1,8 @@
+
 export interface ContactItem {
   name: string;
   head: string| Resource;
+  friend_id?: string;
 }
 
 export default  interface DataItem {

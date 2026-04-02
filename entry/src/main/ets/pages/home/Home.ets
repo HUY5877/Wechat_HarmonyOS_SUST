@@ -1,7 +1,7 @@
 import router from '@ohos.router'
 import ListChatItem, { ChatItemData } from '../../component/ListChatItem'
 import WechatToolbar from '../../component/WechatToolbar'
-import { getFriendsList } from '../../utils/LoginApi'
+import { getMessageList, MessageSummary } from '../../utils/ChatApi'
 import { Toast } from '../../utils/Toast'
 
 const AVATAR_LIST: Resource[] = [
@@ -18,78 +18,41 @@ const AVATAR_LIST: Resource[] = [
 @Component
 export default struct Home {
   @StorageProp('userId') userId: string = ''
-  @State chatList: ChatItemData[] = [
-    {
-      headSrc: $r("app.media.ic_user_head2"),
-      nickname: "老婆",
-      content: "今晚给你做了好吃的，早点下班哦😊",
-      time: "17:21"
-    },
-    {
-      headSrc: $r("app.media.ic_user_head3"),
-      nickname: "游戏好友",
-      content: "我今天又拿了五杀，牛逼不？",
-      time: "15:38"
-    },
-    { headSrc: $r("app.media.ic_user_head4"),
-      nickname: "同事小李",
-      content: "领导，报给写好了，请过目",
-      time: "14:12"
-    },
-    { headSrc: $r("app.media.ic_user_head5"),
-      nickname: "HR小孙",
-      content: "这个岗位还需要招两个人",
-      time: "12:08"
-    },
-    { headSrc: $r("app.media.ic_user_head6"),
-      nickname: "客户小潘",
-      content: "这是我们公司的报价，希望您能考虑下",
-      time: "昨天" },
-    { headSrc: $r("app.media.ic_user_head7"),
-      nickname: "老弟",
-      content: "好的，哥",
-      time: "周一" }
-  ]
+  @State chatList: ChatItemData[] = []
   @State isLoading: boolean = true
 
   aboutToAppear() {
     if (this.userId && this.userId !== '未登录') {
-      this.loadFriendsList()
+      this.loadMessageList()
     } else {
       Toast.show('请先登录')
       this.isLoading = false
     }
   }
 
-  private async loadFriendsList() {
+  private async loadMessageList() {
     try {
-      console.info(`[Home] 开始获取好友列表，userId: ${this.userId}`)
-      const result = await getFriendsList(this.userId)
+      console.info(`[Home] 开始获取消息列表 (query_message_list), userId: ${this.userId}`)
+      const messages: MessageSummary[] = await getMessageList(this.userId)
 
-      if (result.success) {
-        const friends = result.friends
-
-        if (friends && friends.length > 0) {
-          const fetchedChats: ChatItemData[] = friends.map((friend, index) => {
-            const chatItem: ChatItemData = {
-              headSrc: AVATAR_LIST[index % AVATAR_LIST.length],
-              nickname: friend.name || '未知好友',
-              friend_id: friend.friend_id
-            }
-            return chatItem
-          })
-          this.chatList = [...this.chatList, ...fetchedChats]
-          console.info(`[Home] 成功加载 ${fetchedChats.length} 个好友`)
-        } else {
-          console.info(`[Home] 好友列表为空`)
-        }
+      if (messages && messages.length > 0) {
+        this.chatList = messages.map((msg, index): ChatItemData => {
+          return {
+            headSrc: AVATAR_LIST[index % AVATAR_LIST.length],
+            nickname: msg.user_name || '未知用户',
+            content: msg.new_message || '暂无消息',
+            time: '刚刚',
+            friend_id: msg.user_id
+          } as ChatItemData
+        })
+        console.info(`[Home] 成功加载 ${this.chatList.length} 条会话`)
       } else {
-        console.error(`[Home] 获取好友列表失败: ${result.message}`)
-        Toast.show(result.message || '获取好友列表失败')
+        console.info(`[Home] 消息列表为空`)
+        this.chatList = []
       }
     } catch (err) {
-      console.error(`[Home] 获取好友列表异常: ${JSON.stringify(err)}`)
-      Toast.show('加载好友列表失败')
+      console.error(`[Home] 获取消息列表异常: ${JSON.stringify(err)}`)
+      Toast.show('加载会话失败')
     } finally {
       this.isLoading = false
     }
@@ -97,7 +60,12 @@ export default struct Home {
 
   build() {
     Column() {
-      WechatToolbar({ title: `微信(${this.chatList.length})` })
+      WechatToolbar({ 
+        title: `微信(${this.chatList.length})`,
+        onSearchClick: () => {
+          router.pushUrl({ url: 'pages/chat/SearchMessagePage' })
+        }
+      })
 
       if (this.isLoading) {
         Column() {

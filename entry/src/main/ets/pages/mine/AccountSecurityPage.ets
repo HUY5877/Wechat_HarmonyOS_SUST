@@ -2,15 +2,7 @@ import router from '@ohos.router'
 import ListMenuItem from '../../component/ListMenuItem'
 import ApiService from '../../utils/ApiService'
 import { Toast } from '../../utils/Toast'
-
-// 定义用户信息接口
-interface UserInfo {
-  user_id: string;
-  account: string;
-  name: string;
-  status: string;
-  profile_picture_id: string;
-}
+import { UserInfo } from '../../utils/LoginApi'
 
 @Entry
 @Preview
@@ -23,19 +15,18 @@ export default struct AccountSecurityPage {
     status: "",
     profile_picture_id: ""
   }
-
   async aboutToAppear() {
     try {
       // 这里使用默认的user_id，实际应用中应该从登录信息中获取
       const userId = "1";
       const result = await ApiService.getPersonalHomepage(userId);
       if (result) {
-        // 逐个属性赋值，避免结构类型问题
-        this.userInfo.user_id = result.user_id || "";
-        this.userInfo.account = result.account || "";
-        this.userInfo.name = result.name || "";
-        this.userInfo.status = result.status || "";
-        this.userInfo.profile_picture_id = result.profile_picture_id || "";
+        // Use Type Assertion safely or iterate keys if needed, but since we know the mapping:
+        this.userInfo.user_id = result['user_id'] || "";
+        this.userInfo.account = result['account'] || "";
+        this.userInfo.name = result['name'] || "";
+        this.userInfo.status = result['status'] || "";
+        this.userInfo.profile_picture_id = result['profile_picture_id'] || "";
       }
     } catch (error) {
       console.error('获取用户信息失败:', error);

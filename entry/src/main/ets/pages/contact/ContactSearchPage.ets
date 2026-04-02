@@ -156,9 +156,16 @@ export default struct ContactSearchPage {
                   .height(48)
                   .borderRadius(4)
                   .margin({ right: 12 })
-                Text(item.name)
-                  .fontSize(17)
-                  .fontColor(Color.Black)
+                Column() {
+                  Text(item.name)
+                    .fontSize(17)
+                    .fontColor(Color.Black)
+                  Text(`账号: ${item.friend_id}`)
+                    .fontSize(14)
+                    .fontColor(Color.Gray)
+                    .margin({ top: 4 })
+                }
+                .alignItems(HorizontalAlign.Start)
               }
               .width("100%")
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
@@ -166,7 +173,10 @@ export default struct ContactSearchPage {
             .onClick(() => {
               router.pushUrl({
                 url: 'pages/chat/ChatPage',
-                params: { name: item.name }
+                params: { 
+                  name: item.name,
+                  friend_id: item.friend_id
+                }
               })
             })
           })
@@ -194,10 +204,13 @@ export default struct ContactSearchPage {
 
     try {
       const results = await ContactApi.searchContacts(this.currentUserId, keyword)
-      this.searchResults = results.map((item: FriendInfo, index: number): ContactItem => ({
-        name: item.name,
-        head: this.headImages[index % this.headImages.length]
-      }))
+      this.searchResults = results.map((item: FriendInfo, index: number): ContactItem => {
+        return {
+          name: item.name || item.friend_id || '未知用户',
+          head: this.headImages[index % this.headImages.length],
+          friend_id: item.friend_id
+        } as ContactItem
+      })
     } catch (error) {
       prompt.showToast({ message: '搜索失败' })
       this.searchResults = []

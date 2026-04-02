@@ -13,7 +13,7 @@ import { AudioCaptureManager, RecordFile } from '../../utils/AudioCapturerManage
 import { componentUtils } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { PermissionUtils } from '../../utils/PermissionUtils';
-import { getMessagesList, deleteMessage, MessageItem } from '../../utils/LoginApi';
+import { getMessagesList, deleteMessage, MessageItem, sendMessage } from '../../utils/ChatApi';
 
 enum WXInputType {
   /**
@@ -289,15 +289,14 @@ export default struct ChatPage {
       console.info('[ChatPage] userId 或 friendId 为空，跳过加载消息')
       return
     }
-
     try {
       console.info(`[ChatPage] 开始加载消息，userId: ${this.userId}, friendId: ${this.friendId}`)
-      const result = await getMessagesList(this.userId, this.friendId)
+      const messages = await getMessagesList(this.userId, this.friendId)
 
-      if (result.success && result.messages && result.messages.length > 0) {
+      if (messages && messages.length > 0) {
         const chatItems: ChatContentItemData[] = []
-        for (let i = 0; i < result.messages.length; i++) {
-          const msg = result.messages[i]
+        for (let i = 0; i < messages.length; i++) {
+          const msg = messages[i]
           const isSelf = msg.message_user_id === this.userId
           chatItems.push({
             name: isSelf ? this.name : '对方',
@@ -317,7 +316,11 @@ export default struct ChatPage {
             this.scroller.scrollToIndex(targetIndex)
           } else {
             console.info(`[ChatPage] 未找到目标消息 messageId: ${this.targetMessageId}`)
+            this.scroller.scrollToIndex(this.dataList.length - 1)
           }
+        } else {
+          // 默认进入页面滚动到最底部
+          this.scroller.scrollToIndex(this.dataList.length - 1)
         }
       } else {
         console.info('[ChatPage] 暂无历史消息')
@@ -709,16 +712,49 @@ export default struct ChatPage {
     .padding({ bottom: 8 })
   }
 
-  private sendTextMsg() {
-    this.dataList.push({
-      name: "鲁班",
-      headSrc: $r("app.media.ic_user_head2"),
-      msgType: 0,
-      self: true,
-      msg: this.chatText,
-    })
-    this.scroller.scrollToIndex(this.dataList.length)
-    this.chatText = ""
+  private async sendTextMsg() {
+    if (!this.chatText.trim()) {
+      return
+    }
+
+    if (!this.userId || this.userId === '未登录') {
+      Toast.show('请先登录')
+      return
+    }
+
+    if (!this.friendId) {
+      Toast.show('未识别的好友ID')
+      return
+    }
+
+    const content = this.chatText.trim()
+    this.chatText = "" // 立即清空输入框，提升用户体验
+
+    try {
+      console.info(`[ChatPage] 发送消息，userId: ${this.userId}, friendId: ${this.friendId}, content: ${content}`)
+      const result = await sendMessage(this.userId, this.friendId, content)
+
+      if (result.success) {
+        console.info(`[ChatPage] 消息发送成功`)
+        // 直接在 UI 上添加，避免等待刷新带来的卡顿感
+        this.dataList.push({
+          name: "我",
+          headSrc: $r("app.media.ic_user_head1"),
+          msgType: 0,
+          self: true,
+          msg: content,
+        } as ChatContentItemData)
+        this.scroller.scrollToIndex(this.dataList.length)
+      } else {
+        console.error(`[ChatPage] 消息发送失败: ${result.message}`)
+        Toast.show(result.message || '发送失败')
+        this.chatText = content // 发送失败时回填文字
+      }
+    } catch (err) {
+      console.error(`[ChatPage] 发送消息异常: ${JSON.stringify(err)}`)
+      Toast.show('发送异常')
+      this.chatText = content // 发送异常时回填文字
+    }
   }
 
   private showFuncBarWithAnim(show: boolean) {

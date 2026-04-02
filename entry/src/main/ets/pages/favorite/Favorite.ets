@@ -1,13 +1,17 @@
+
 import router from '@ohos.router'
 import WindowManager from '../../utils/WindowManager'
-import { getFavoriteList, searchFavorites, deleteFavorite, FavoriteRecord } from '../../utils/FavoriteApi'
+import { FavoriteApi, FavoriteItem, FavoriteSearchItem } from '../../utils/FavoriteApi'
 import { Toast } from '../../utils/Toast'
+
+// Alias for FavoriteItem to maintain compatibility
+type FavoriteRecord = FavoriteItem;
 
 @Entry
 @Component
 export default struct Favorite {
   @State searchText: string = ''
-  @State favoriteList: FavoriteRecord[] = []
+  @State favoriteList: FavoriteItem[] = []
   @State isLoading: boolean = true
   @StorageProp('userId') userId: string = ''
   @State isFirstLoad: boolean = true
@@ -27,7 +31,6 @@ export default struct Favorite {
       return
     }
     if (this.userId) {
-      // 只有非首次加载且有搜索文本时，才保持搜索状态；否则加载全部列表
       if (this.searchText.trim().length > 0) {
         this.doSearch(this.searchText)
       } else {
@@ -39,12 +42,8 @@ export default struct Favorite {
   private async loadFavorites() {
     this.isLoading = true
     try {
-      const res = await getFavoriteList(this.userId)
-      if (res.success) {
-        this.favoriteList = res.data
-      } else {
-        Toast.show(res.message)
-      }
+      const data = await FavoriteApi.getFavorites(this.userId)
+      this.favoriteList = data
     } catch (e) {
       Toast.show('加载收藏失败')
     } finally {
@@ -58,17 +57,21 @@ export default struct Favorite {
     this.isLoading = true
     try {
       if (text.trim().length === 0) {
-        // 如果搜索框为空，重新加载全量列表
         await this.loadFavorites()
         return
       }
       
-      const res = await searchFavorites(this.userId, text)
-      if (res.success) {
-        this.favoriteList = res.data
-      } else {
-        Toast.show(res.message)
-      }
+      const data = await FavoriteApi.searchFavorites(this.userId, text)
+      // Map search items to the common list format if needed
+      this.favoriteList = data.map((item: FavoriteSearchItem): FavoriteItem => {
+        return {
+          favorites_id: item.favorites_id,
+          favorites_user_id: '',
+          message_id: item.message_id,
+          content: item.favorites_content,
+          created_at: item.created_at
+        } as FavoriteItem
+      })
     } catch (e) {
       Toast.show('搜索失败')
     } finally {

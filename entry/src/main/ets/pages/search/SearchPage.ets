@@ -53,7 +53,12 @@ export default struct SearchPage {
               this.searchText = value
             })
             .onSubmit(() => {
-              prompt.showToast({ message: this.searchText })
+              if (this.searchText.trim()) {
+                router.pushUrl({
+                  url: 'pages/chat/SearchMessagePage',
+                  params: { name: '搜索结果', friend_id: '', keyword: this.searchText.trim() }
+                })
+              }
             })
 
           Row() {
@@ -140,7 +145,7 @@ export default struct SearchPage {
 
       Row() {
         Text("朋友圈")
-          .width("25%")
+          .width("20%")
           .fontColor("#5f6c8a")
           .fontSize(17)
           .fontWeight(500)
@@ -148,15 +153,25 @@ export default struct SearchPage {
           .textAlign(TextAlign.Center)
 
         Text("公众号")
-          .width("25%")
+          .width("20%")
           .fontColor("#5f6c8a")
           .fontSize(17)
           .fontWeight(500)
           .textAlign(TextAlign.Center)
           .onClick(unDevTip)
 
+        Text("聊天记录")
+          .width("20%")
+          .fontColor("#5f6c8a")
+          .fontSize(17)
+          .fontWeight(500)
+          .textAlign(TextAlign.Center)
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/chat/SearchMessagePage' })
+          })
+
         Text("小程序")
-          .width("25%")
+          .width("20%")
           .fontColor("#5f6c8a")
           .fontSize(17)
           .fontWeight(500)
@@ -164,7 +179,7 @@ export default struct SearchPage {
           .onClick(unDevTip)
 
         Text("视频号")
-          .width("25%")
+          .width("20%")
           .fontWeight(500)
           .fontColor("#5f6c8a")
           .fontSize(17)
