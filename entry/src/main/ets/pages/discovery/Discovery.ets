@@ -10,10 +10,13 @@ export default struct Discovery {
     Column() {
       WechatToolbar({ title: "发现" })
 
-      ListMenuItem({ title: "朋友圈", iconSrc: $r('app.media.ic_moment') })
-        .onClick(() => {
+      ListMenuItem({
+        title: "朋友圈",
+        iconSrc: $r('app.media.ic_moment'),
+        clickHandler: () => {
           router.pushUrl({ url: 'pages/moments/MomentsPage' })
-        })
+        }
+      })
 
       Divider()
         .vertical(false)

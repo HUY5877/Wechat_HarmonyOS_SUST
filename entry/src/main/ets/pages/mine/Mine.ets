@@ -195,9 +195,9 @@ export default struct Mine {
         .lineCap(LineCapStyle.Round)
       ListMenuItem({
         title: "设置",
-        iconSrc: $r('app.media.ic_setting')
+        iconSrc: $r('app.media.ic_setting'),
+        clickHandler: () => { router.pushUrl({ url: 'pages/mine/SettingPage' }) }
       })
-        .onClick(() => { Toast.show('二级页面正在开发中...') })
 
       // 退出登录按钮
       if (this.userId !== '未登录') {
