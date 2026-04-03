@@ -71,12 +71,14 @@ export default struct ServicePage {
       .padding({ left: 16, right: 16, top: WindowManager.statusBarHeight })
       .backgroundColor('#EDEDED')
 
+      // 可滚动内容区域
       Scroll() {
         Column() {
           // 顶部绿色卡片
           Row() {
+            // 收付款
             Column() {
-              Image($r('app.media.ic_scan')) 
+              Image($r('app.media.ic_scan'))
                 .width(36)
                 .height(36)
                 .margin({ bottom: 12 })
@@ -88,11 +90,11 @@ export default struct ServicePage {
             .layoutWeight(1)
             .alignItems(HorizontalAlign.Center)
             .onClick(() => {
-              Toast.show('该功能暂未开发')
+              router.pushUrl({ url: 'pages/mine/PaymentPage' })
             })
             
             Column() {
-              Image($r('app.media.ic_card_pkg')) 
+              Image($r('app.media.ic_card_pkg'))
                 .width(36)
                 .height(36)
                 .margin({ bottom: 12 })
@@ -125,7 +127,7 @@ export default struct ServicePage {
               .fontColor('#999')
               .width('100%')
               .padding({ left: 16, top: 16, bottom: 4 })
-            
+
             Row() {
               ServiceSectionItem({ iconSrc: $r('app.media.ic_card_pkg'), title: '信用卡还款' })
               ServiceSectionItem({ iconSrc: $r('app.media.ic_red_pkg'), title: '理财通' })
@@ -145,7 +147,7 @@ export default struct ServicePage {
               .fontColor('#999')
               .width('100%')
               .padding({ left: 16, top: 16, bottom: 4 })
-            
+
             Row() {
               ServiceSectionItem({ iconSrc: $r('app.media.ic_service'), title: '手机充值' })
               ServiceSectionItem({ iconSrc: $r('app.media.ic_miniprogram'), title: '生活缴费' })
@@ -165,7 +167,7 @@ export default struct ServicePage {
               .fontColor('#999')
               .width('100%')
               .padding({ left: 16, top: 16, bottom: 4 })
-            
+
             Row() {
               ServiceSectionItem({ iconSrc: $r('app.media.ic_location'), title: '出行服务' })
             }

@@ -1,6 +1,6 @@
-
 import router from '@ohos.router'
 import WindowManager from '../../utils/WindowManager'
+import { FavoriteApi, FavoriteItem } from '../../utils/FavoriteApi'
 import FavoriteApi, { FavoriteItem } from '../../utils/FavoriteApi'
 import { Toast } from '../../utils/Toast'
 
@@ -10,6 +10,7 @@ export default struct FavoriteDetail {
   @State record: FavoriteItem | null = null
   @StorageProp('userId') userId: string = ''
   @State isDeleting: boolean = false
+
   aboutToAppear() {
     const params = router.getParams() as Record<string, object>
     if (params && params['record']) {

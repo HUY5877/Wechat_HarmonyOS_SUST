@@ -3,7 +3,8 @@ import common from '@ohos.app.ability.common';
 import window from '@ohos.window';
 import { Toast } from '../../utils/Toast';
 import WindowManager from '../../utils/WindowManager';
-import { getFriendsList, FriendItem, sendMessage } from '../../utils/LoginApi';
+import { sendMessage } from '../../utils/LoginApi';
+import ContactApi, { FriendInfo } from '../../utils/ContactApi';
 
 const AVATAR_LIST: Resource[] = [
   $r("app.media.ic_user_head1"),
@@ -27,11 +28,11 @@ export default struct ForwardPage {
   private keyboardHeight: number = 0
   private forwardContent: string = ''
   @State private searchText: string = ''
-  @State private allFriends: FriendItem[] = []
-  @State private filteredFriends: FriendItem[] = []
+  @State private allFriends: FriendInfo[] = []
+  @State private filteredFriends: FriendInfo[] = []
   @State private isLoading: boolean = true
   @State private showConfirmDialog: boolean = false
-  @State private selectedFriend: FriendItem | null = null
+  @State private selectedFriend: FriendInfo | null = null
   @State private isSending: boolean = false
   @StorageProp('userId') userId: string = ''
 
@@ -62,10 +63,10 @@ export default struct ForwardPage {
     }
 
     try {
-      const result = await getFriendsList(this.userId)
-      if (result.success && result.friends) {
-        this.allFriends = result.friends
-        this.filteredFriends = result.friends
+      const friends = await ContactApi.getContacts(this.userId)
+      if (friends && friends.length > 0) {
+        this.allFriends = friends
+        this.filteredFriends = friends
       }
     } catch (err) {
       console.error(`[ForwardPage] 加载好友异常: ${JSON.stringify(err)}`)
@@ -80,14 +81,14 @@ export default struct ForwardPage {
       this.filteredFriends = this.allFriends
     } else {
       const keyword = value.toLowerCase()
-      this.filteredFriends = this.allFriends.filter((friend: FriendItem) => {
+      this.filteredFriends = this.allFriends.filter((friend: FriendInfo) => {
         const name = friend.name || ''
         return name.toLowerCase().includes(keyword)
       })
     }
   }
 
-  onSelectFriend(friend: FriendItem) {
+  onSelectFriend(friend: FriendInfo) {
     this.selectedFriend = friend
     this.showConfirmDialog = true
   }
@@ -214,7 +215,7 @@ export default struct ForwardPage {
         .justifyContent(FlexAlign.Center)
       } else {
         List() {
-          ForEach(this.filteredFriends, (friend: FriendItem, index: number) => {
+          ForEach(this.filteredFriends, (friend: FriendInfo, index: number) => {
             ListItem() {
               Row() {
                 Image(AVATAR_LIST[index % AVATAR_LIST.length])

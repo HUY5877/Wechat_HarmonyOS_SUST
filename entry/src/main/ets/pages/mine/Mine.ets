@@ -127,7 +127,7 @@ export default struct Mine {
         .alignItems(HorizontalAlign.Start)
 
         Blank()
-
+        
         Image($r('app.media.ic_qrcode'))
           .width(18)
           .height(18)
