@@ -14,6 +14,7 @@ import { componentUtils } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { PermissionUtils } from '../../utils/PermissionUtils';
 import { getMessagesList, deleteMessage, MessageItem, sendMessage } from '../../utils/ChatApi';
+import { FavoriteApi } from '../../utils/FavoriteApi';
 
 enum WXInputType {
   /**
@@ -406,7 +407,14 @@ export default struct ChatPage {
     }
 
     try {
-      Toast.show('收藏功能暂未接入')
+      console.info(`[ChatPage] 收藏消息，userId: ${this.userId}, messageId: ${msgItem.messageId}`)
+      const result = await FavoriteApi.addFavorite(this.userId, msgItem.messageId)
+      
+      if (result.result === 'success') {
+        Toast.show('收藏成功')
+      } else {
+        Toast.show(result.text || '收藏失败')
+      }
     } catch (err) {
       console.error(`[ChatPage] 收藏异常: ${JSON.stringify(err)}`)
       Toast.show('收藏失败')

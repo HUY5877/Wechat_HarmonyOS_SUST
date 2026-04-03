@@ -170,10 +170,6 @@ export default struct SearchMessagePage {
                   .width('100%')
                   .padding(10)
                   .borderRadius(4)
-                Text(`来自: ${item.friend_id}`)
-                  .fontSize(12)
-                  .fontColor(Color.Gray)
-                  .margin({ top: 4 })
               }
               .margin({ left: 15, right: 15, top: 8 })
             }

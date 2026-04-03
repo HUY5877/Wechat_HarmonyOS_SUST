@@ -39,9 +39,25 @@ export class FavoriteApi {
   static async getFavorites(userId: string): Promise<FavoriteItem[]> {
     try {
       const data: UserIdParams = { user_id: userId };
-      const res = await ApiService.request<object>('query_favorites', 'favorites', data);
-      return ApiService.extractList<FavoriteItem>(res, userId);
+      const res = await ApiService.request<Record<string, FavoriteItem[]>>('query_favorites', 'favorites', data);
+      console.log('收藏列表原始响应:', JSON.stringify(res));
+      
+      // 处理返回格式: {"user_id": [{...}, {...}]}
+      if (res && res[userId]) {
+        return res[userId];
+      }
+      // 兼容格式: {"1": [{...}, {...}]}
+      const keys = Object.keys(res);
+      if (keys.length > 0) {
+        const firstKey = keys[0];
+        const list = res[firstKey];
+        if (Array.isArray(list)) {
+          return list;
+        }
+      }
+      return [];
     } catch (err) {
+      console.error('获取收藏列表失败:', err);
       return [];
     }
   }
@@ -76,9 +92,25 @@ export class FavoriteApi {
   static async searchFavorites(userId: string, content: string): Promise<FavoriteSearchItem[]> {
     try {
       const data: FavoriteSearchParams = { user_id: userId, content: content };
-      const res = await ApiService.request<object>('query_favorites_message', 'favorites', data);
-      return ApiService.extractList<FavoriteSearchItem>(res, userId);
+      const res = await ApiService.request<Record<string, FavoriteSearchItem[]>>('query_favorites_message', 'favorites', data);
+      console.log('搜索收藏原始响应:', JSON.stringify(res));
+      
+      // 处理返回格式: {"user_id": [{...}, {...}]}
+      if (res && res[userId]) {
+        return res[userId];
+      }
+      // 兼容格式: {"1": [{...}, {...}]}
+      const keys = Object.keys(res);
+      if (keys.length > 0) {
+        const firstKey = keys[0];
+        const list = res[firstKey];
+        if (Array.isArray(list)) {
+          return list;
+        }
+      }
+      return [];
     } catch (err) {
+      console.error('搜索收藏失败:', err);
       return [];
     }
   }

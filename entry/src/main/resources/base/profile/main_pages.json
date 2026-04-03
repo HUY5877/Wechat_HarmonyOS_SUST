@@ -12,7 +12,6 @@
     "pages/favorite/Favorite",
     "pages/favorite/FavoriteDetail",
     "pages/contact/Contact",
-    "pages/favorite/FavoriteDetail",
     "pages/contact/ContactSearchPage",
     "pages/contact/AddFriendPage",
     "pages/game2048/Game2048",
@@ -24,12 +23,9 @@
     "pages/mine/BalancePage",
     "pages/mine/LingqiantongPage",
     "pages/mine/BankCardPage",
-    "pages/favorite/Favorite",
     "pages/moments/MomentsPage",
     "pages/moments/PublishMomentPage",
-    "pages/mine/PersonalInfoPage"
-    "pages/mine/ServicePage",
-    "pages/mine/PaymentPage",
-    "pages/discovery/GamePage"
+    "pages/mine/PersonalInfoPage",
+    "pages/mine/PaymentPage"
   ]
 }

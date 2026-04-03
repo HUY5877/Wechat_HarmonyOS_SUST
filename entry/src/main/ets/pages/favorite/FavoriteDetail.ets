@@ -1,6 +1,5 @@
 import router from '@ohos.router'
 import WindowManager from '../../utils/WindowManager'
-import { FavoriteApi, FavoriteItem } from '../../utils/FavoriteApi'
 import FavoriteApi, { FavoriteItem } from '../../utils/FavoriteApi'
 import { Toast } from '../../utils/Toast'
 
