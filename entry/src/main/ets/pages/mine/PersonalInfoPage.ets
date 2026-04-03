@@ -31,7 +31,7 @@ export default struct PersonalInfoPage {
       if (res && res.success && res.data) {
         this.userName = res.data.name || '无名氏'
         this.userAccount = res.data.account || '未知账号'
-        this.userStatus = ''
+        this.userStatus = res.data.status || ''
         this.profilePictureId = res.data.profile_picture_id || '0'
         
         // 根据数据库中的头像ID，映射到本地的资源图片

@@ -63,7 +63,7 @@ export default struct Mine {
       if (res && res.success && res.data) {
         this.userName = res.data.name || '无名氏'
         this.userAccount = res.data.account || '未知账号'
-        this.userStatus = ''
+        this.userStatus = res.data.status || ''
 
         // 获取后端的头像ID
         const avatarId = String(res.data.profile_picture_id || '0')
@@ -165,24 +165,11 @@ export default struct Mine {
 
       Divider().color("#f3f3f3").strokeWidth(1)
 
-      ListMenuItem({ title: "朋友圈", iconSrc: $r('app.media.ic_moment_pic') })
-        .onClick(() => {
-          // 暂时跳转跳转发现页，直到朋友圈详情页开发完成
-          Toast.show("更多动态请前往'发现'页查看")
-        })
-
-      Divider()
-        .vertical(false)
-        .color("#f3f3f3")
-        .strokeWidth(1)
-        .lineCap(LineCapStyle.Round)
       ListMenuItem({
         title: "朋友圈",
-        iconSrc: $r('app.media.ic_moment_pic')
+        iconSrc: $r('app.media.ic_moment_pic'),
+        clickHandler: () => { router.pushUrl({ url: 'pages/moments/MomentsPage' }) }
       })
-        .onClick(() => {
-          router.pushUrl({ url: 'pages/moments/MomentsPage' })
-        })
       Divider()
         .vertical(false)
         .color("#f3f3f3")

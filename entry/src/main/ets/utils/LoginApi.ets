@@ -273,6 +273,7 @@ export async function getUserInfo(userId: string): Promise<UserInfoResult> {
           data: {
             account: body.account || '',
             name: body.name || '',
+            status: body.status || '',
             profile_picture_id: body.profile_picture_id !== undefined ? String(body.profile_picture_id) : '0'
           }
         }
